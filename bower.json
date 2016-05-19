@@ -1,0 +1,26 @@
+{
+  "name": "html5-banner-builder",
+  "description": "Build and disperse banners for different sizes and vendors",
+  "main": "Gulpfile.js",
+  "authors": [
+    "Logan Call"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "'HTML5",
+    "Banners'",
+    "Greensock",
+    "automation",
+    "gulp"
+  ],
+  "moduleType": [],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "dependencies/",
+    "test",
+    "tests"
+  ]
+}

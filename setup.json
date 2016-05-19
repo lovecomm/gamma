@@ -1,0 +1,48 @@
+{
+	"client" : "",
+	"project" : "",
+	"hasStatics" : true,
+	"staticExtension" : "",
+	"concepts" : [
+		 ""
+	],
+	"sizes" : [
+		{
+			"name" : "300x600",
+			"width" : "300",
+			"height" : "600"
+		},
+		{
+			"name" : "160x600",
+			"width" : "160",
+			"height" : "600"
+		},
+		{
+			"name" : "300x250",
+			"width" : "300",
+			"height" : "250"
+		},
+		{
+			"name" : "728x90",
+			"width" : "728",
+			"height" : "90"
+		},
+		{
+			"name" : "320x50",
+			"width" : "320",
+			"height" : "50"
+		}
+	],
+	"vendors" : [
+		{
+			"name" : "dbclick",
+			"link" : "javascript:window.open(window.clickTag)",
+			"script" : "<script> var clickTag = '[ClickThroughURL]' </script>"
+		},
+		{
+			"name" : "adwords",
+			"link" : "#",
+			"script" : ""
+		}
+	]
+}

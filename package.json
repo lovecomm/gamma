@@ -1,0 +1,39 @@
+{
+  "name": "Strategist",
+  "version": "1.0.0",
+  "description": "Build and disperse HTML5 banners for different sizes and vendors",
+  "main": "Gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/logancallweb/html5-banner-builder.git"
+  },
+  "keywords": [
+    "'HTML5",
+    "Banners'",
+    "Greensock",
+    "automation",
+    "gulp"
+  ],
+  "author": "Logan Call",
+  "license": "MIT",
+  "homepage": "",
+  "devDependencies": {
+    "del": "^2.2.0",
+    "gulp": "^3.9.0",
+    "gulp-bower": "0.0.13",
+    "gulp-consolidate": "^0.1.2",
+    "gulp-load-plugins": "^0.10.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-prompt": "^0.1.2",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-util": "^3.0.6",
+    "gulp-zip": "^3.2.0",
+    "lodash": "^3.10.1",
+    "run-sequence": "^1.1.5",
+    "to-camel-case": "^0.2.1"
+  }
+}
