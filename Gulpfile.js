@@ -82,6 +82,7 @@ gulp.task("clean", function() {
 			}
 		}));
 });
+
 gulp.task("purge", function() { console.log("\n\ngulp purge is not a task. Did you mean gulp clean?\n\n")});
 
 // Move Bower dependencies to correct locations
@@ -89,6 +90,16 @@ gulp.task("dep", function() {
 
 	// preview dependencies
 	// gulp.src("node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
+});
+
+gulp.task("image-min", function() {
+	gulp.src(globalImgPath + "**" )
+		.pipe(plugins.imagemin({
+			progressive: true,
+			interlaced: true,
+			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+		}))
+		.pipe(gulp.dest(globalImgPath));
 });
 
 gulp.task("gather-script-assets", function() {
