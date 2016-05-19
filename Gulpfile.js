@@ -55,7 +55,7 @@ function bannerSpecificImageDependencies(concept, size, destination, copy) {
 };
 
 gulp.task("clean", function() {
-	gulp.src("./template-general.lodash")
+	gulp.src("templates/banner-general.lodash")
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
@@ -71,7 +71,7 @@ gulp.task("clean", function() {
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
 					if(concept) {
-						del("template-" + concept + ".lodash");
+						del("templates/banner-" + concept + ".lodash");
 					}
 				}
 			}
@@ -121,7 +121,7 @@ for( var c = 0; c < concepts.length; c++ ) {
 
 			var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
 
-			gulp.src('template-general.lodash')
+			gulp.src('templates/banner-general.lodash')
 				.pipe(plugins.plumber(function(error) {
 						plugins.util.log(
 							plugins.util.colors.red(error.message),
@@ -150,8 +150,8 @@ for( var c = 0; c < concepts.length; c++ ) {
 	}
 
 	for( var c = 0; c < concepts.length; c++ ) {
-		gulp.src("template-general.lodash")
-		.pipe(plugins.rename("template-" + concepts[c] + ".lodash"))
+		gulp.src("templates/banner-general.lodash")
+		.pipe(plugins.rename("templates/banner-" + concepts[c] + ".lodash"))
 		.pipe(gulp.dest("./"));
 	}
 });
@@ -165,7 +165,7 @@ gulp.task("first-size", function(callback) {
               callback);
 		console.log("\n\nNext steps: \nAnimate the first size of each of your concepts. Then, \n1. Copy your CUSTOM STYLES, CUSTOM DOM NODES, CUSTOM VARS, and TIMELINE from the first-size of each master banner to it's corresponding lodash template. \n\tAlso note, You may have used the height and width for various other styles or values in your timeline. To turn those into variables that will get converted into their correct sizes for each banner, change them to the lodash code, `<%= bannerWidth %>` and `<%= bannerHeight %>`.\n2.Run gulp resize. This takes everything you've done for each concept and copies it into each of the sizes you listed out in setup.json.\n\n")
 	} else {
-		console.log("\n\nYour master banner has already been generated. Proceed with animations there, then copy them into the template-general.lodash file, and then run the `gulp generate-sizes` task\n\n");
+		console.log("\n\nYour master banner has already been generated. Proceed with animations there, then copy them into the banner-general.lodash file, and then run the `gulp generate-sizes` task\n\n");
 	}
 });
 gulp.task("default", ["first-size"]);
@@ -179,7 +179,7 @@ gulp.task("resize", ["gather-script-assets"], function(callback) {
 				var destination = bannerDirectory + bannerName;
 				var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[i], destination, false);
 
-				gulp.src("template-" + concepts[c] + ".lodash")
+				gulp.src("templates/banner-" + concepts[c] + ".lodash")
 					.pipe(plugins.plumber(function(error) {
 							plugins.util.log(
 								plugins.util.colors.red(error.message),
@@ -273,7 +273,7 @@ gulp.task("vendor-code", function() {
 
 // Generate index.html file for Client Preview
 gulp.task("preview", function() {
-	gulp.src("index.lodash", {base: "./"})
+	gulp.src("templates/preview.lodash", {base: "./"})
 		.pipe(plugins.plumber(function(error) {
 				plugins.util.log(
 					plugins.util.colors.red(error.message),

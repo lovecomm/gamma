@@ -29,7 +29,7 @@
 						<% } %>
 					</ul>
 				<% } %>
-				
+
 				<h2>Animated Banners</h2>
 				<ul>
 					<% for(var c = 0; c <= concepts.length; c++ ) { var concept = concepts[c]; %>
@@ -54,7 +54,7 @@
 		$('a.gallery').featherlightGallery({
 		  openSpeed: 300
 		});
-			
+
 		$(".main").find("a").each(function() {
 			$(this).on("click", function(e) {
 				setTimeout(function() {
