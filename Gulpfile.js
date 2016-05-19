@@ -1,6 +1,6 @@
 "use strict";
 
-var gulp 					 	= require('gulp'),
+let gulp 					 	= require('gulp'),
 		plugins 			 	= require('gulp-load-plugins')(),
 		fs 							= require('fs'),
 		path 						= require("path"),
@@ -83,12 +83,10 @@ gulp.task("clean", function() {
 		}));
 });
 
-gulp.task("purge", function() { console.log("\n\ngulp purge is not a task. Did you mean gulp clean?\n\n")});
+gulp.task("purge", ["clean"], function() { console.log("\n\ngulp purge is not a task. Ran gulp clean instead\n\n")});
 
-// Move Bower dependencies to correct locations
+// Move any custom dependencies to correct locations
 gulp.task("dep", function() {
-
-	// preview dependencies
 	// gulp.src("node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
 });
 
@@ -99,7 +97,7 @@ gulp.task("image-min", function() {
 			interlaced: true,
 			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
 		}))
-		.pipe(gulp.dest("./assets/static-banners/"));
+		.pipe(gulp.dest("./assets/images/"));
 
 	gulp.src("./assets/static-banners/**" )
 		.pipe(plugins.imagemin({
