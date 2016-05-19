@@ -60,7 +60,7 @@ function bannerSpecificImageDependencies(concept, size, destination, copy) {
 };
 
 gulp.task("clean", function() {
-	gulp.src("templates/banner-general.lodash")
+	gulp.src("./templates/banner-general.lodash")
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
@@ -76,7 +76,7 @@ gulp.task("clean", function() {
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
 					if(concept) {
-						del("templates/banner-" + concept + ".lodash");
+						del("./templates/banner-" + concept + ".lodash");
 					}
 				}
 			}
@@ -93,13 +93,21 @@ gulp.task("dep", function() {
 });
 
 gulp.task("image-min", function() {
-	gulp.src(globalImgPath + "**" )
+	gulp.src("./assets/images/**" )
 		.pipe(plugins.imagemin({
 			progressive: true,
 			interlaced: true,
 			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
 		}))
-		.pipe(gulp.dest(globalImgPath));
+		.pipe(gulp.dest("./assets/static-banners/"));
+
+	gulp.src("./assets/static-banners/**" )
+		.pipe(plugins.imagemin({
+			progressive: true,
+			interlaced: true,
+			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+		}))
+		.pipe(gulp.dest("./assets/static-banners/"));
 });
 
 gulp.task("gather-script-assets", function() {
@@ -137,7 +145,7 @@ for( var c = 0; c < concepts.length; c++ ) {
 
 			var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
 
-			gulp.src('templates/banner-general.lodash')
+			gulp.src('./templates/banner-general.lodash')
 				.pipe(plugins.plumber(function(error) {
 						plugins.util.log(
 							plugins.util.colors.red(error.message),
@@ -166,8 +174,8 @@ for( var c = 0; c < concepts.length; c++ ) {
 	}
 
 	for( var c = 0; c < concepts.length; c++ ) {
-		gulp.src("templates/banner-general.lodash")
-		.pipe(plugins.rename("templates/banner-" + concepts[c] + ".lodash"))
+		gulp.src("./templates/banner-general.lodash")
+		.pipe(plugins.rename("./templates/banner-" + concepts[c] + ".lodash"))
 		.pipe(gulp.dest("./"));
 	}
 });
@@ -195,7 +203,7 @@ gulp.task("resize", ["gather-script-assets"], function(callback) {
 				var destination = bannerDirectory + bannerName;
 				var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[i], destination, false);
 
-				gulp.src("templates/banner-" + concepts[c] + ".lodash")
+				gulp.src("./templates/banner-" + concepts[c] + ".lodash")
 					.pipe(plugins.plumber(function(error) {
 							plugins.util.log(
 								plugins.util.colors.red(error.message),
@@ -289,7 +297,7 @@ gulp.task("vendor-code", function() {
 
 // Generate index.html file for Client Preview
 gulp.task("preview", function() {
-	gulp.src("templates/preview.lodash", {base: "./"})
+	gulp.src("./templates/preview.lodash", {base: "./"})
 		.pipe(plugins.plumber(function(error) {
 				plugins.util.log(
 					plugins.util.colors.red(error.message),
@@ -346,7 +354,6 @@ gulp.task("zip-banners", ["copy-static"], function() {
 					gulp.src(bannerDir + "*")
 						.pipe(plugins.zip("./" + vendors[v].name + "/" + bannerName + ".zip"))
 						.pipe(gulp.dest("./4-handoff"))
-						// .pipe(gulp.dest("./" + client + "-" + project + "-" + "handoff/"))
 				}
 			}
 		}
