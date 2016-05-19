@@ -79,19 +79,11 @@ gulp.task("clean", function() {
 });
 gulp.task("purge", function() { console.log("\n\ngulp purge is not a task. Did you mean gulp clean?\n\n")});
 
-// Install Bower dependencies
-gulp.task("bower", function() { return plugins.bower(); });
-
 // Move Bower dependencies to correct locations
-gulp.task("dep", ["bower"], function() {
-
-	// gulp.src(".dependencies/gsap/src/minified/easing/EasePack.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/plugins/CSSPlugin.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/TimelineMax.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/TweenLite.min.js").pipe(gulp.dest("assets/scripts"));
+gulp.task("dep", function() {
 
 	// preview dependencies
-	gulp.src(".dependencies/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
+	// gulp.src("node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
 });
 
 gulp.task("gather-script-assets", function() {
