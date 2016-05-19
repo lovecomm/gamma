@@ -47,7 +47,12 @@ function bannerSpecificImageDependencies(concept, size, destination, copy) {
 			if(copy) {
 				//copy images to banner specific folder
 				gulp.src("assets/images/" + filename)
-						.pipe(gulp.dest(destination));
+					.pipe(plugins.imagemin({
+						progressive: true,
+						interlaced: true,
+						svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+					}))
+					.pipe(gulp.dest(destination));
 			}
 		}
 	}
@@ -301,6 +306,11 @@ gulp.task("preview", function() {
 // COPIES STATIC BANNERS INTO HANDOFF FOLDER (CREATES HANDOFF FOLDER HERE)
 gulp.task("copy-static", function() {
 	return gulp.src("assets/static-banners/*")
+		.pipe(plugins.imagemin({
+			progressive: true,
+			interlaced: true,
+			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+		}))
 		.pipe(gulp.dest("./4-handoff/static-backups/"));
 });
 
