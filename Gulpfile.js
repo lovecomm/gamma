@@ -1,5 +1,7 @@
 "use strict";
 
+let _ = require('./app/helpers.js');
+
 let gulp 					 	= require('gulp'),
 		plugins 			 	= require('gulp-load-plugins')(),
 		fs 							= require('fs'),
@@ -21,43 +23,6 @@ let gulp 					 	= require('gulp'),
 		jsDependencies	= [],
 		imgDependencies = [],
 		bannerList = [];
-
-function isGenerated(dir, filename) {
-	var dircontents = fs.readdirSync(dir);
-	for (var i = 0; i < dircontents.length; i++) {
-		if(dircontents[i] == filename) { return true; }
-	}
-	return false;
-};
-
-function bannerSpecificImageDependencies(concept, size, destination, copy) {
-	var imgArray = []
-	var dircontents = fs.readdirSync("./assets/images/");
-
-	for (var i = 0; i < dircontents.length; i++) {
-		var filename = dircontents[i];
-		var conceptAndSize = concept + "-" + size.name;
-		var id = camel(filename.split('.')[0]);
-		var splithyphen = filename.split("-");
-		var layerName = splithyphen[splithyphen.length - 1].split(".")[0];
-
-		if( filename.indexOf( conceptAndSize ) > -1 ) {
-			imgArray.push({'fileName' : filename, 'id' : id, "layerName" : layerName});
-
-			if(copy) {
-				//copy images to banner specific folder
-				gulp.src("assets/images/" + filename)
-					.pipe(plugins.imagemin({
-						progressive: true,
-						interlaced: true,
-						svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
-					}))
-					.pipe(gulp.dest(destination));
-			}
-		}
-	}
-	return imgArray;
-};
 
 gulp.task("clean", function() {
 	gulp.src("./templates/banner-general.lodash")
@@ -139,9 +104,9 @@ gulp.task("gather-img-assets", function() {
 
 gulp.task("masters", function() {
 for( var c = 0; c < concepts.length; c++ ) {
-		if( !isGenerated("./1-first-size/", "master-" + concepts[c]) ) {
+		if( !_.isGenerated("./1-first-size/", "master-" + concepts[c]) ) {
 
-			var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
+			var bannerSpecificImgDep = _.bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
 
 			gulp.src('./templates/banner-general.lodash')
 				.pipe(plugins.plumber(function(error) {
@@ -179,7 +144,7 @@ for( var c = 0; c < concepts.length; c++ ) {
 });
 
 gulp.task("first-size", function(callback) {
-	if( !isGenerated("./1-first-size", "master-banner") ) {
+	if( !_.isGenerated("./1-first-size", "master-banner") ) {
 		runSequence("dep",
               "gather-script-assets",
               "gather-img-assets",
@@ -194,12 +159,12 @@ gulp.task("default", ["first-size"]);
 
 gulp.task("resize", ["gather-script-assets"], function(callback) {
 	for( var c = 0; c < concepts.length; c++ ) {
-		if( !isGenerated("./2-resize/", "concept-" + concepts[c]) ) {
+		if( !_.isGenerated("./2-resize/", "concept-" + concepts[c]) ) {
 			for (var i = 0; i < sizes.length; i++) {
 				var bannerName = client + "-" + project + "-" + concepts[c] + "-" + sizes[i].name;
 				var bannerDirectory = "2-resize/concept-" + concepts[c] + "/";
 				var destination = bannerDirectory + bannerName;
-				var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[i], destination, false);
+				var bannerSpecificImgDep = _.bannerSpecificImageDependencies(concepts[c], sizes[i], destination, false);
 
 				gulp.src("./templates/banner-" + concepts[c] + ".lodash")
 					.pipe(plugins.plumber(function(error) {
@@ -262,7 +227,7 @@ gulp.task("vendor-code", function() {
 					var bannerDir = vendorDir + bannerName + "/";
 
 					// Copy banner specific images into their respective directories
-					var bannerSpecificImgDep = bannerSpecificImageDependencies(	concepts[c], sizes[s], bannerDir, true );
+					var bannerSpecificImgDep = _.bannerSpecificImageDependencies(	concepts[c], sizes[s], bannerDir, true );
 
 					// Add vendor specific info to each banner
 					gulp.src(bannerDir + "index.html", {base: "./"})
