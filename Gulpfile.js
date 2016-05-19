@@ -324,7 +324,7 @@ gulp.task("preview", function() {
 
 // COPIES STATIC BANNERS INTO HANDOFF FOLDER (CREATES HANDOFF FOLDER HERE)
 gulp.task("copy-static", function() {
-	return gulp.src("assets/static-banners/*")
+	return gulp.src("./assets/static-banners/*")
 		.pipe(plugins.imagemin({
 			progressive: true,
 			interlaced: true,
