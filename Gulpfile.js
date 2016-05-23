@@ -1,23 +1,22 @@
 "use strict";
 
-let _ = require('./app/helpers.js');
-
-let gulp 					 	= require('gulp'),
-		plugins 			 	= require('gulp-load-plugins')(),
-		path 						= require("path"),
-		del 						= require('del'),
-		date 					 	= new Date(),
-		runSequence			= require("run-sequence"),
- 		config 					= require("./config.json"),
-		client 					= config["client"],
-		project 				= config["project"],
-		concepts				= config["concepts"],
+let gulp = require('gulp'),
+		_ = require('./app/helpers.js');
+		plugins = require('gulp-load-plugins')(),
+		path = require("path"),
+		del = require('del'),
+		date 	= new Date(),
+		runSequence = require("run-sequence"),
+ 		config = require("./config.json"),
+		client = config["client"],
+		project = config["project"],
+		concepts = config["concepts"],
 		conceptKeys = Object.keys(concepts),
-		sizes						= config["sizes"],
-		vendors					= config["vendors"],
-		hasStatics 			= config["hasStatics"],
+		sizes = config["sizes"],
+		vendors = config["vendors"],
+		hasStatics = config["hasStatics"],
 		staticExtension = config["staticExtension"],
-		globalImgPath   = "/assets/images/",
+		globalImgPath = "/assets/images/",
 		globalScriptsPath = "/assets/scripts/",
 		jsDependencies = [],
 		bannerList = [];
@@ -27,14 +26,13 @@ gulp.task("clean", function() {
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
-			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-first-size dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-vendor dir.\n4. Files within the 4-handoff dir.\n5. All generated *.lodash templates.\n5. All files within the .dependencies dir.\n\n"
+			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-first-size dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-vendor dir.\n4. Files within the 4-handoff dir.\n5. All generated *.lodash templates.\n\n"
 		}, function(res) {
 			if(res.clean === true) {
 				del("1-first-size/*");
 				del("2-resize/*");
 				del("3-vendor/*");
 				del("4-handoff/*");
-				del(".dependencies/*");
 
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
@@ -48,27 +46,15 @@ gulp.task("clean", function() {
 
 gulp.task("purge", ["clean"], function() { console.log("\n\ngulp purge is not a task. Ran gulp clean instead.\n\n")});
 
-gulp.task('image-layers-min', function (){
-	return gulp.src("./assets/images/**" )
+gulp.task("image-min", function() {
+	return gulp.src( ["./assets/images/**", "./assets/static-banners/**"], {base: "./"} )
 		.pipe(plugins.imagemin({
 			progressive: true,
 			interlaced: true,
 			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
 		}))
-		.pipe(gulp.dest("./assets/images/"));
-})
-
-gulp.task('static-banners-min', function (){
-	return 	gulp.src("./assets/static-banners/**" )
-			.pipe(plugins.imagemin({
-				progressive: true,
-				interlaced: true,
-				svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
-			}))
-			.pipe(gulp.dest("./assets/static-banners/"));
-})
-
-gulp.task("image-min", ['image-layers-min', 'static-banners-min']);
+		.pipe(gulp.dest("./"));
+});
 
 // Move any custom dependencies to correct locations
 gulp.task("dep", function() {
@@ -122,8 +108,6 @@ conceptKeys.forEach(function(concept) {
 });
 
 gulp.task('masters', conceptKeys);
-
-
 
 gulp.task('first-size', function(callback) {
 	if( !_.isGenerated('./1-first-size', 'master-banner') ) {
