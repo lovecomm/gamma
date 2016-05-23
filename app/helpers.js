@@ -1,6 +1,8 @@
 "use strict";
 
-let fs = require('fs');
+let fs = require('fs'),
+	path = require("path"),
+	camel = require('to-camel-case');
 
 module.exports = {
 	isGenerated: function(dir, filename) {
@@ -10,7 +12,7 @@ module.exports = {
 		}
 		return false;
 	},
-	bannerSpecificImageDependencies: function(concept, size, destination, copy) {
+	getImagesObject: function(concept, size, destination, copy) {
 		var imgArray = []
 		var dircontents = fs.readdirSync("./assets/images/");
 
@@ -37,5 +39,38 @@ module.exports = {
 			}
 		}
 		return imgArray;
+	},
+	createJSDependenciesArray: function() {
+		return new Promise(function(resolve, reject) {
+			fs.readdir('./assets/scripts', function(err, files) {
+
+				if(err) {
+					reject(err);
+				}
+
+				let jsDependencies	= [];
+
+				jsDependencies = files.filter(function(file) {
+            return file.split('.').pop() == 'js';
+        });
+
+				return resolve(jsDependencies);
+			});
+		});
+	},
+	createImgAssetsArray: function() {
+		let imgDependencies = [];
+		fs.readdir('./assets/images', function(err, files) {
+			for (var i = 0; i < files.length; i++) {
+				var fileExtension = files[i].split('.').pop();
+				if (fileExtension == 'jpg' || fileExtension == 'png' || fileExtension == "gif") {
+					var fileName = files[i];
+					var id = camel(files[i].split('.')[0]);
+					imgDependencies.push({'fileName' : fileName, 'id' : id});
+				}
+			}
+		});
+		console.log(imgDependencies);
+		return imgDependencies;
 	}
-}
+};

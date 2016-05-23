@@ -4,9 +4,7 @@ let _ = require('./app/helpers.js');
 
 let gulp 					 	= require('gulp'),
 		plugins 			 	= require('gulp-load-plugins')(),
-		fs 							= require('fs'),
 		path 						= require("path"),
-		camel 					= require('to-camel-case'),
 		del 						= require('del'),
 		date 					 	= new Date(),
 		runSequence			= require("run-sequence"),
@@ -14,14 +12,14 @@ let gulp 					 	= require('gulp'),
 		client 					= config["client"],
 		project 				= config["project"],
 		concepts				= config["concepts"],
+		conceptKeys = Object.keys(concepts),
 		sizes						= config["sizes"],
 		vendors					= config["vendors"],
 		hasStatics 			= config["hasStatics"],
 		staticExtension = config["staticExtension"],
 		globalImgPath   = "/assets/images/",
 		globalScriptsPath = "/assets/scripts/",
-		jsDependencies	= [],
-		imgDependencies = [],
+		jsDependencies = [],
 		bannerList = [];
 
 gulp.task("clean", function() {
@@ -48,11 +46,11 @@ gulp.task("clean", function() {
 		}));
 });
 
-gulp.task("purge", ["clean"], function() { console.log("\n\ngulp purge is not a task. Ran gulp clean instead\n\n")});
+gulp.task("purge", ["clean"], function() { console.log("\n\ngulp purge is not a task. Ran gulp clean instead.\n\n")});
 
 // Move any custom dependencies to correct locations
 gulp.task("dep", function() {
-	// gulp.src("node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
+	// gulp.src("./node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("./assets/scripts/"));
 });
 
 gulp.task("image-min", function() {
@@ -73,53 +71,35 @@ gulp.task("image-min", function() {
 		.pipe(gulp.dest("./assets/static-banners/"));
 });
 
-gulp.task("gather-script-assets", function() {
-
-	return fs.readdir('./assets/scripts', function(err, files) {
-		if(files) {
-			for (var i = 0; i < files.length; i++) {
-				var fileExtension = files[i].split('.').pop();
-				if (fileExtension == 'js') {
-					jsDependencies.push(files[i]);
-				}
-			}
-		} else {
-			console.log("NO JS File dependencies");
-		}
-	});
-});
 
 gulp.task("gather-img-assets", function() {
-	return fs.readdir('./assets/images', function(err, files) {
-		for (var i = 0; i < files.length; i++) {
-			var fileExtension = files[i].split('.').pop();
-			if (fileExtension == 'jpg' || fileExtension == 'png' || fileExtension == "gif") {
-				var fileName = files[i];
-				var id = camel(files[i].split('.')[0]);
-				imgDependencies.push({'fileName' : fileName, 'id' : id});
-			}
-		}
+	_.createImgAssetsArray();
+});
+
+gulp.task('js-assets', function() {
+	return _.createJSDependenciesArray().then(function(data) {
+		jsDependencies = data;
+	}).catch(function(e) {
+		console.log(e);
 	});
 });
 
-gulp.task("masters", function() {
-for( var c = 0; c < concepts.length; c++ ) {
-		if( !_.isGenerated("./1-first-size/", "master-" + concepts[c]) ) {
+conceptKeys.forEach(function(concept) {
+	if( !_.isGenerated("./1-first-size/", "master-" + concepts[concept]) ) {
 
-			var bannerSpecificImgDep = _.bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
-
-			gulp.src('./templates/banner-general.lodash')
+		gulp.task(concept, ['js-assets'], function() {
+		 	return gulp.src('./templates/banner-general.lodash')
 				.pipe(plugins.plumber(function(error) {
 						plugins.util.log(
 							plugins.util.colors.red(error.message),
 							plugins.util.colors.yellow('\r\nOn line: '+error.line),
 							plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-							);
+						);
 						this.emit('end');
 					}))
 				.pipe(plugins.consolidate('lodash', {
 					jsDependencies: jsDependencies,
-					imgDependencies: bannerSpecificImgDep,
+					imgDependencies: _.getImagesObject(concepts[concept], sizes[0],  "./1-first-size/master-" + concepts[concept], false),
 					imgPath: globalImgPath,
 					scriptsPath: globalScriptsPath,
 					bannerWidth: sizes[0].width,
@@ -129,24 +109,27 @@ for( var c = 0; c < concepts.length; c++ ) {
 					vendorLink: "<%= vendorLink %>"
 				}))
 				.pipe(plugins.rename("index.html"))
-				.pipe(gulp.dest("./1-first-size/master-" + concepts[c]));
+				.pipe(gulp.dest("./1-first-size/master-" + concepts[concept]));
+		});
 
-		} else {
-			console.log("You've already generated the master for the " + concepts[c] + " concept. To re-generate, simply delete the 1-first-size/master-" + concepts[c] + " directory, and re-run this task.");
-		}
-	}
-
-	for( var c = 0; c < concepts.length; c++ ) {
-		gulp.src("./templates/banner-general.lodash")
-		.pipe(plugins.rename("./templates/banner-" + concepts[c] + ".lodash"))
-		.pipe(gulp.dest("./"));
+	} else {
+		console.log("Slow down there! You need to delete the concept folders before you can regenerate them");
 	}
 });
+
+conceptKeys.forEach(function(concept) {
+	return gulp.src("./templates/banner-general.lodash")
+		.pipe(plugins.rename("./templates/banner-" + concepts[concept] + ".lodash"))
+		.pipe(gulp.dest("./"));
+});
+
+gulp.task('masters', conceptKeys);
+
+
 
 gulp.task("first-size", function(callback) {
 	if( !_.isGenerated("./1-first-size", "master-banner") ) {
 		runSequence("dep",
-              "gather-script-assets",
               "gather-img-assets",
               "masters",
               callback);
