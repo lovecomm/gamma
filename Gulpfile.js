@@ -23,7 +23,7 @@ let gulp 					 	= require('gulp'),
 		bannerList = [];
 
 gulp.task("clean", function() {
-	gulp.src("./templates/banner-general.lodash")
+	return gulp.src("./templates/banner-general.lodash")
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
@@ -48,36 +48,35 @@ gulp.task("clean", function() {
 
 gulp.task("purge", ["clean"], function() { console.log("\n\ngulp purge is not a task. Ran gulp clean instead.\n\n")});
 
-// Move any custom dependencies to correct locations
-gulp.task("dep", function() {
-	// gulp.src("./node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("./assets/scripts/"));
-});
-
-gulp.task("image-min", function() {
-	gulp.src("./assets/images/**" )
+gulp.task('image-layers-min', function (){
+	return gulp.src("./assets/images/**" )
 		.pipe(plugins.imagemin({
 			progressive: true,
 			interlaced: true,
 			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
 		}))
 		.pipe(gulp.dest("./assets/images/"));
+})
 
-	gulp.src("./assets/static-banners/**" )
-		.pipe(plugins.imagemin({
-			progressive: true,
-			interlaced: true,
-			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
-		}))
-		.pipe(gulp.dest("./assets/static-banners/"));
+gulp.task('static-banners-min', function (){
+	return 	gulp.src("./assets/static-banners/**" )
+			.pipe(plugins.imagemin({
+				progressive: true,
+				interlaced: true,
+				svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+			}))
+			.pipe(gulp.dest("./assets/static-banners/"));
+})
+
+gulp.task("image-min", ['image-layers-min', 'static-banners-min']);
+
+// Move any custom dependencies to correct locations
+gulp.task("dep", function() {
+	return gulp.src("./node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("./assets/scripts/"));
 });
 
-
-gulp.task("gather-img-assets", function() {
-	_.createImgAssetsArray();
-});
-
-gulp.task('js-assets', function() {
-	return _.createJSDependenciesArray().then(function(data) {
+gulp.task('get-js-files', function() {
+	return _.getJSFiles().then(function(data) {
 		jsDependencies = data;
 	}).catch(function(e) {
 		console.log(e);
@@ -87,7 +86,7 @@ gulp.task('js-assets', function() {
 conceptKeys.forEach(function(concept) {
 	if( !_.isGenerated("./1-first-size/", "master-" + concepts[concept]) ) {
 
-		gulp.task(concept, ['js-assets'], function() {
+		gulp.task(concept, function() {
 		 	return gulp.src('./templates/banner-general.lodash')
 				.pipe(plugins.plumber(function(error) {
 						plugins.util.log(
@@ -99,12 +98,11 @@ conceptKeys.forEach(function(concept) {
 					}))
 				.pipe(plugins.consolidate('lodash', {
 					jsDependencies: jsDependencies,
-					imgDependencies: _.getImagesObject(concepts[concept], sizes[0],  "./1-first-size/master-" + concepts[concept], false),
+					imgDependencies: _.getImages(concepts[concept], sizes[0],  "./1-first-size/master-" + concepts[concept], false),
 					imgPath: globalImgPath,
 					scriptsPath: globalScriptsPath,
 					bannerWidth: sizes[0].width,
 					bannerHeight: sizes[0].height,
-					conceptAndSize: "",
 					vendorScript: "<%= vendorScript %>",
 					vendorLink: "<%= vendorLink %>"
 				}))
@@ -113,7 +111,7 @@ conceptKeys.forEach(function(concept) {
 		});
 
 	} else {
-		console.log("Slow down there! You need to delete the concept folders before you can regenerate them");
+		console.log("Slow down there! You need to delete the concept folders before you can regenerate them!");
 	}
 });
 
@@ -127,11 +125,11 @@ gulp.task('masters', conceptKeys);
 
 
 
-gulp.task("first-size", function(callback) {
-	if( !_.isGenerated("./1-first-size", "master-banner") ) {
-		runSequence("dep",
-              "gather-img-assets",
-              "masters",
+gulp.task('first-size', function(callback) {
+	if( !_.isGenerated('./1-first-size', 'master-banner') ) {
+		runSequence('dep',
+							'get-js-files',
+              ['masters', 'image-min'],
               callback);
 		console.log("\n\nNext steps: \nAnimate the first size of each of your concepts. Then, \n1. Copy your CUSTOM STYLES, CUSTOM DOM NODES, CUSTOM VARS, and TIMELINE from the first-size of each master banner to it's corresponding lodash template. \n\tAlso note, You may have used the height and width for various other styles or values in your timeline. To turn those into variables that will get converted into their correct sizes for each banner, change them to the lodash code, `<%= bannerWidth %>` and `<%= bannerHeight %>`.\n2.Run gulp resize. This takes everything you've done for each concept and copies it into each of the sizes you listed out in setup.json.\n\n")
 	} else {
@@ -165,7 +163,6 @@ gulp.task("resize", ["gather-script-assets"], function(callback) {
 						scriptsPath: globalScriptsPath,
 						bannerWidth: sizes[i].width,
 						bannerHeight: sizes[i].height,
-						conceptAndSize: concepts[c] + sizes[i].name,
 						vendorScript: "<%= vendorScript %>",
 						vendorLink: "<%= vendorLink %>"
 					}))
