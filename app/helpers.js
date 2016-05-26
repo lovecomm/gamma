@@ -1,6 +1,6 @@
 "use strict";
 
-let fs = require('fs'),
+let fs = require('fs-extra'),
 	camel = require('to-camel-case');
 
 module.exports = {
@@ -31,7 +31,7 @@ module.exports = {
 						gulp.src("assets/images/" + filename)
 							.pipe(gulp.dest(destination));
 					}
-				} 
+				}
 			}
 			return imgArray;
 	},
@@ -39,9 +39,7 @@ module.exports = {
 		return new Promise(function(resolve, reject) {
 			fs.readdir('./assets/scripts', function(err, files) {
 
-				if(err) {
-					reject(err);
-				}
+				if(err) { return reject(err); }
 
 				let paths	= [];
 
@@ -77,6 +75,13 @@ module.exports = {
 				return resolve(tasks);
 			});
 		}
-
+	},
+	copyDir: function(target, destination) {
+		return new Promise(function(resolve, reject) {
+			fs.copy(target, destination, function (err) {
+			  if (err) return reject(err)
+				return resolve(true);
+			})
+		});
 	}
 };

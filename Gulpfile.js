@@ -2,7 +2,7 @@
 
 let gulp = require('gulp'),
 	_ = require('./app/helpers.js'),
-	fs = require('fs'),
+	fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	path = require("path"),
 	del = require('del'),
@@ -21,19 +21,6 @@ let gulp = require('gulp'),
 	globalImgPath = "/assets/images/",
 	globalScriptsPath = "/assets/scripts/",
 	jsDependencies = [];
-
-gulp.task('tasks-array-vendors', function() {
-	return _.getTasksArray(vendors, concepts, '_').then(function(data) {
-		return _.getTasksArray(data, sizes, '_').then(function(childData) {
-			vendorTasks = childData;
-		}).catch(function(e) {
-			console.log(e);
-		});
-	}).catch(function(e) {
-		console.log(e);
-	});
-});
-
 
 // START CLEANING TASK
 gulp.task("clean", function() {
@@ -98,7 +85,7 @@ gulp.task('get-js-files', function() {
 
 
 
-// // START GENERATE MASTER AND RESIZE TASKS
+// START GENERATE MASTER AND RESIZE TASKS
 function registerTasks() {
 	tasks.master.forEach(function(masterconcept) {
 		let concept = masterconcept.match(/master-(.+)/)[1];
@@ -177,33 +164,84 @@ function registerTasks() {
 			}
 
 			// START GENERATE VENDOR TASKS
+			tasks.vendor.forEach(function(vendorConceptSize) {
+				let vendor = vendorConceptSize.match(/(.*)_/)[1],
+					concept = vendorConceptSize.match(/.*_(.*)@/)[1],
+					size = vendorConceptSize.match(/.*@(.*)/)[1],
+					target = './2-resize/concept-' + concept + '/' + concept + '-' + size,
+					destination = './3-vendor/vendor-' + vendor + '/' + concept + '-' + size,
+					script,
+					link;
 
+				// get vendor specific details to add to banner
+				vendors.forEach(function(vendorFromConfig) {
+					if (vendorFromConfig.name === vendor) {
+						script = vendorFromConfig.script;
+						link = vendorFromConfig.link;
+					}
+				});
+
+				gulp.task(vendorConceptSize, function() {
+					return _.copyDir(target, destination).then(function() {
+
+						return gulp.src(destination + '/index.html', {base: "./"})
+							.pipe(plugins.plumber(function(error) {
+									plugins.util.log(
+										plugins.util.colors.red(error.message),
+										plugins.util.colors.yellow('\r\nOn line: '+error.line),
+										plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+										);
+									this.emit('end');
+								}))
+							.pipe(plugins.consolidate('lodash', {
+								vendorScript: script,
+								vendorLink: link
+							}))
+							// .pipe(plugins.replace('/assets/images/', ''))
+							// .pipe(plugins.replace('/assets/scripts/', ''))
+							.pipe(gulp.dest("./"));
+					});
+				});
+			});
 			// END GENERATE VENDOR TASKS
 		});
 	});
 }
 
-// gulp.task('vendor', vendorTasks);
-
-
-gulp.task('first-size', function() {
+gulp.task('default', function() {
 	return _.getTasksArray(concepts, undefined, 'master-').then(function(masterData) {
 		return _.getTasksArray(concepts, sizes, '-').then(function(sizeData) {
-			tasks.master = masterData;
-			tasks.resize = sizeData;
-			fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
+				return _.getTasksArray(vendorConceptsData, sizes, '@').then(function(vendor) {
 
-			registerTasks();
-			return runSequence('dep',
-		    ['get-js-files', 'image-min'],
-				tasks.master);
+					// remove any tasks currently in the tasks.json file
+					delete tasks['master'];
+					delete tasks['resize'];
+					delete tasks['vendor'];
+
+					// Add generated task names to the tasks.json file
+					tasks.master = masterData;
+					tasks.resize = sizeData;
+					tasks.vendor = vendor;
+					// tasks.vendor2 = vendor2;
+					fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+
+					registerTasks();
+					return runSequence('dep',
+				    ['get-js-files', 'image-min'],
+						tasks.master);
+				}).catch(function(e) { console.log(e); });
+			}).catch(function(e) { console.log(e); });
 		}).catch(function(e) { console.log(e); });
 	}).catch(function(e) { console.log(e); });
 });
-gulp.task("default", ["first-size"]);
-
 
 gulp.task('resize', ['get-js-files'], function() {
 	registerTasks();
 	return gulp.start(tasks.resize);
+});
+
+gulp.task('vendor', function() {
+	registerTasks();
+	return gulp.start(tasks.vendor);
 });
