@@ -2,8 +2,8 @@ node_modules
 .codekit-cache
 _creative
 .dependencies
-4-preview/**
-3-vendor/**
+3-preview/**
+4-vendor/**
 5-handoff/**
 *.zip
 *.sass-cache
