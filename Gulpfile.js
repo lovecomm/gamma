@@ -85,8 +85,8 @@ gulp.task('get-js-files', function() {
 
 
 
-// START GENERATE MASTER AND RESIZE TASKS
-function registerTasks() {
+// START GENERATE MASTER TASKS
+function registerMasterTasks() {
 	tasks.master.forEach(function(masterconcept) {
 		let concept = masterconcept.match(/master-(.+)/)[1];
 
@@ -97,7 +97,6 @@ function registerTasks() {
 				.pipe(plugins.rename("./templates/banner-" + concept + ".lodash"))
 				.pipe(gulp.dest("./"));
 
-			// START GENERATE MASTER TASKS
 			gulp.task(masterconcept, function() {
 			 	return gulp.src('./templates/banner-general.lodash')
 					.pipe(plugins.plumber(function(error) {
@@ -121,115 +120,131 @@ function registerTasks() {
 					.pipe(plugins.rename('index.html'))
 					.pipe(gulp.dest('./1-masters/master-concepts/' + masterconcept));
 			});
-			// END GENERATE MASTER TASKS
 		}
+	});
+}
+// END GENERATE MASTER TASKS
 
-		tasks.resize.forEach(function(conceptSize) {
-			let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
-				concept = conceptSize.match(/(.*)-/)[1],
-				height = /(\d*)x/.exec(size)[1],
-				width = /x(\d*)/.exec(size)[1],
-				bannerName = concept + '-' + size,
-				bannerDirectory = '2-resize/concept-' + concept + '/',
-				destination = bannerDirectory + bannerName;
+// START GENERATE RESIZE TASKS
+function registerResizeTasks() {
+	tasks.resize.forEach(function(conceptSize) {
+		let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
+			concept = conceptSize.match(/(.*)-/)[1],
+			height = /(\d*)x/.exec(size)[1],
+			width = /x(\d*)/.exec(size)[1],
+			bannerName = concept + '-' + size,
+			bannerDirectory = '2-resize/concept-' + concept + '/',
+			destination = bannerDirectory + bannerName;
 
-			if (!_.isGenerated('./2-resize/', 'concept-' + concept)) {
+		if (!_.isGenerated('./2-resize/', 'concept-' + concept)) {
 
-				// START GENERATE RESIZE TASKS
-				gulp.task(conceptSize, function() {
+			gulp.task(conceptSize, function() {
 
-					 gulp.src("./templates/banner-" + concept + ".lodash")
-						.pipe(plugins.plumber(function(error) {
-								plugins.util.log(
-									plugins.util.colors.red(error.message),
-									plugins.util.colors.yellow('\r\nOn line: '+error.line),
-									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-									);
-								this.emit('end');
-							}))
-						.pipe(plugins.consolidate('lodash', {
-							jsDependencies: jsDependencies,
-							imgDependencies: _.getImages(concept, size, destination, false),
-							imgPath: globalImgPath,
-							scriptsPath: globalScriptsPath,
-							bannerWidth: width,
-							bannerHeight: height,
-							vendorScript: "<%= vendorScript %>",
-							vendorLink: "<%= vendorLink %>"
+				 gulp.src("./templates/banner-" + concept + ".lodash")
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+								);
+							this.emit('end');
 						}))
-						.pipe(plugins.rename("index.html"))
-						.pipe(gulp.dest(destination));
-				});
-				// END GENERATE RESIZE TASKS
-			}
-
-			// START GENERATE VENDOR TASKS
-			tasks.vendor.forEach(function(vendorConceptSize) {
-				let vendor = vendorConceptSize.match(/(.*)_/)[1],
-					concept = vendorConceptSize.match(/.*_(.*)@/)[1],
-					size = vendorConceptSize.match(/.*@(.*)/)[1],
-					target = './2-resize/concept-' + concept + '/' + concept + '-' + size,
-					destination = './4-vendor/vendor-' + vendor + '/' + concept + '-' + size,
-					script,
-					link;
-
-				// get vendor specific details to add to banner
-				vendors.forEach(function(vendorFromConfig) {
-					if (vendorFromConfig.name === vendor) {
-						script = vendorFromConfig.script;
-						link = vendorFromConfig.link;
-					}
-				});
-
-				gulp.task(vendorConceptSize, function() {
-					return _.copyDir(target, destination).then(function() {
-
-						return gulp.src(destination + '/index.html', {base: "./"})
-							.pipe(plugins.plumber(function(error) {
-									plugins.util.log(
-										plugins.util.colors.red(error.message),
-										plugins.util.colors.yellow('\r\nOn line: '+error.line),
-										plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-										);
-									this.emit('end');
-								}))
-							.pipe(plugins.consolidate('lodash', {
-								vendorScript: script,
-								vendorLink: link
-							}))
-							.pipe(plugins.replace('/assets/images/', ''))
-							.pipe(plugins.replace('/assets/scripts/', ''))
-							.pipe(gulp.dest("./"));
-					});
-				});
+					.pipe(plugins.consolidate('lodash', {
+						jsDependencies: jsDependencies,
+						imgDependencies: _.getImages(concept, size, destination, false),
+						imgPath: globalImgPath,
+						scriptsPath: globalScriptsPath,
+						bannerWidth: width,
+						bannerHeight: height,
+						vendorScript: "<%= vendorScript %>",
+						vendorLink: "<%= vendorLink %>"
+					}))
+					.pipe(plugins.rename("index.html"))
+					.pipe(gulp.dest(destination));
 			});
-			// END GENERATE VENDOR TASKS
+		}
+	});
+}
+// END GENERATE RESIZE TASKS
+
+// START GENERATE VENDOR TASKS
+function registerVendorTasks() {
+	tasks.vendor.forEach(function(vendorConceptSize) {
+		let vendor = vendorConceptSize.match(/(.*)_/)[1],
+			concept = vendorConceptSize.match(/.*_(.*)@/)[1],
+			size = vendorConceptSize.match(/.*@(.*)/)[1],
+			target = './2-resize/concept-' + concept + '/' + concept + '-' + size,
+			destination = './4-vendor/vendor-' + vendor + '/' + concept + '-' + size,
+			script,
+			link;
+
+		// get vendor specific details to add to banner
+		vendors.forEach(function(vendorFromConfig) {
+			if (vendorFromConfig.name === vendor) {
+				script = vendorFromConfig.script;
+				link = vendorFromConfig.link;
+			}
+		});
+
+		gulp.task(vendorConceptSize, function() {
+			return _.copyDir(target, destination).then(function() {
+
+				return gulp.src(destination + '/index.html', {base: "./"})
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+								);
+							this.emit('end');
+						}))
+					.pipe(plugins.consolidate('lodash', {
+						vendorScript: script,
+						vendorLink: link
+					}))
+					.pipe(plugins.replace('/assets/images/', ''))
+					.pipe(plugins.replace('/assets/scripts/', ''))
+					.pipe(gulp.dest("./"));
+			});
 		});
 	});
 }
+// END GENERATE VENDOR TASKS
+
+// START GENERATE HANDOFF TASKS
+function registerHandoffTasks() {
+	tasks.handoff.forEach(function(handoffVendorConceptSize) {
+		gulp.task(handoffVendorConceptSize, function() {
+			console.log(handoffVendorConceptSize);
+		});
+	});
+}
+// END GENERATE HANDOFF TASKS
 
 gulp.task('default', function() {
 	return _.getTasksArray(concepts, undefined, 'master-').then(function(masterData) {
 		return _.getTasksArray(concepts, sizes, '-').then(function(sizeData) {
 			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
 				return _.getTasksArray(vendorConceptsData, sizes, '@').then(function(vendor) {
+					return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
+						// remove any tasks currently in the tasks.json file
+						delete tasks['master'];
+						delete tasks['resize'];
+						delete tasks['vendor'];
+						delete tasks['handoff'];
 
-					// remove any tasks currently in the tasks.json file
-					delete tasks['master'];
-					delete tasks['resize'];
-					delete tasks['vendor'];
+						// Add generated task names to the tasks.json file
+						tasks.master = masterData;
+						tasks.resize = sizeData;
+						tasks.vendor = vendor;
+						tasks.handoff = handoff;
+						fs.writeFileSync(tasksPath, JSON.stringify(tasks));
 
-					// Add generated task names to the tasks.json file
-					tasks.master = masterData;
-					tasks.resize = sizeData;
-					tasks.vendor = vendor;
-					// tasks.vendor2 = vendor2;
-					fs.writeFileSync(tasksPath, JSON.stringify(tasks));
-
-					registerTasks();
-					return runSequence('dep',
-				    ['get-js-files', 'image-min'],
-						tasks.master);
+						registerMasterTasks();
+						return runSequence('dep',
+					    ['get-js-files', 'image-min'],
+							tasks.master);
+					}).catch(function(e) { console.log(e); });
 				}).catch(function(e) { console.log(e); });
 			}).catch(function(e) { console.log(e); });
 		}).catch(function(e) { console.log(e); });
@@ -237,13 +252,18 @@ gulp.task('default', function() {
 });
 
 gulp.task('resize', ['get-js-files'], function() {
-	registerTasks();
+	registerResizeTasks();
 	return gulp.start(tasks.resize);
 });
 
 gulp.task('vendor', function() {
-	registerTasks();
+	registerVendorTasks();
 	return gulp.start(tasks.vendor);
+});
+
+gulp.task('handoff', function() {
+	registerHandoffTasks();
+	return gulp.start(tasks.handoff);
 });
 
 
