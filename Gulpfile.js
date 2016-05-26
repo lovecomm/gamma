@@ -18,8 +18,8 @@ let gulp = require('gulp'),
 	vendors = config["vendors"],
 	hasStatics = config["hasStatics"],
 	staticExtension = config["staticExtension"],
-	globalImgPath = "/assets/images/",
-	globalScriptsPath = "/assets/scripts/",
+	globalImgPath = "../../assets/images/",
+	globalScriptsPath = "../../assets/scripts/",
 	jsDependencies = [];
 
 // START CLEANING TASK
@@ -28,13 +28,14 @@ gulp.task("clean", function() {
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
-			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-first-size dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-vendor dir.\n4. Files within the 4-handoff dir.\n5. All generated *.lodash templates.\n\n"
+			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-masters/master-concepts dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-preview dir.\n4. Files within the 4-vendor dir.\n5. Files within the 5-handoff dir.\n6. All generated *.lodash templates.\n\n"
 		}, function(res) {
 			if(res.clean === true) {
-				del("1-first-size/*");
+				del("1-masters/master-concepts/*");
 				del("2-resize/*");
-				del("3-vendor/*");
-				del("4-handoff/*");
+				del("3-preview/*");
+				del("4-vendor/*");
+				del("5-handoff/*");
 
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
@@ -90,7 +91,7 @@ function registerTasks() {
 	tasks.master.forEach(function(masterconcept) {
 		let concept = masterconcept.match(/master-(.+)/)[1];
 
-		if( !_.isGenerated('./1-first-size/', masterconcept) ) {
+		if( !_.isGenerated('./1-masters/master-concepts/', masterconcept) ) {
 
 			// Create individual templates for each concept. These will be used on resizes
 			gulp.src("./templates/banner-general.lodash")
@@ -110,7 +111,7 @@ function registerTasks() {
 						}))
 					.pipe(plugins.consolidate('lodash', {
 						jsDependencies: jsDependencies,
-						imgDependencies: _.getImages(concept, sizes[0].name,  './1-first-size/' +  masterconcept, false),
+						imgDependencies: _.getImages(concept, sizes[0].name,  './1-masters/master-concepts/' +  masterconcept, false),
 						imgPath: globalImgPath,
 						scriptsPath: globalScriptsPath,
 						bannerWidth: sizes[0].width,
@@ -119,7 +120,7 @@ function registerTasks() {
 						vendorLink: '<%= vendorLink %>'
 					}))
 					.pipe(plugins.rename('index.html'))
-					.pipe(gulp.dest('./1-first-size/' + masterconcept));
+					.pipe(gulp.dest('./1-masters/master-concepts/' + masterconcept));
 			});
 			// END GENERATE MASTER TASKS
 		}
@@ -169,7 +170,7 @@ function registerTasks() {
 					concept = vendorConceptSize.match(/.*_(.*)@/)[1],
 					size = vendorConceptSize.match(/.*@(.*)/)[1],
 					target = './2-resize/concept-' + concept + '/' + concept + '-' + size,
-					destination = './3-vendor/vendor-' + vendor + '/' + concept + '-' + size,
+					destination = './4-vendor/vendor-' + vendor + '/' + concept + '-' + size,
 					script,
 					link;
 
@@ -197,8 +198,8 @@ function registerTasks() {
 								vendorScript: script,
 								vendorLink: link
 							}))
-							// .pipe(plugins.replace('/assets/images/', ''))
-							// .pipe(plugins.replace('/assets/scripts/', ''))
+							.pipe(plugins.replace('/assets/images/', ''))
+							.pipe(plugins.replace('/assets/scripts/', ''))
 							.pipe(gulp.dest("./"));
 					});
 				});
@@ -244,4 +245,33 @@ gulp.task('resize', ['get-js-files'], function() {
 gulp.task('vendor', function() {
 	registerTasks();
 	return gulp.start(tasks.vendor);
+});
+
+
+// Generate Client Preview
+gulp.task("preview", function() {
+
+	return _.copyDir('./2-resize/', './3-preview').then(function() {
+
+		// return gulp.src("./templates/preview.lodash")
+		// 	.pipe(plugins.plumber(function(error) {
+		// 			plugins.util.log(
+		// 				plugins.util.colors.red(error.message),
+		// 				plugins.util.colors.yellow('\r\nOn line: '+error.line),
+		// 				plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+		// 				);
+		// 			this.emit('end');
+		// 		}))
+		// 	.pipe(plugins.consolidate('lodash', {
+		// 		client: client,
+		// 		project: project,
+		// 		sizes: sizes,
+		// 		vendors: vendors,
+		// 		concepts: concepts,
+		// 		hasStatics: hasStatics,
+		// 		staticExtension: staticExtension
+		// 	}))
+		// 	.pipe(plugins.rename("index.html"))
+		// 	.pipe(gulp.dest("./preview"));
+	});
 });
