@@ -222,12 +222,7 @@ function registerHandoffTasks() {
 				target = '4-vendor/vendor-' + vendor + '/' + bannerName + '/*',
 				destination = './5-handoff';
 
-			return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip').then(function() {
-
-				return gulp.src('./5-handoff/**')
-					.pipe(plugins.zip('./' + client + '-' + project + '-' + 'handoff.zip'))
-					.pipe(gulp.dest('./'))
-			});
+			return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip');
 		});
 	});
 }
@@ -268,16 +263,6 @@ gulp.task('resize', ['get-js-files'], function() {
 	return gulp.start(tasks.resize);
 });
 
-gulp.task('vendor', function() {
-	registerVendorTasks();
-	return gulp.start(tasks.vendor);
-});
-
-gulp.task('handoff', ['copy-static'], function() {
-	registerHandoffTasks();
-	return gulp.start(tasks.handoff);
-});
-
 // Generate Client Preview
 gulp.task("preview", function() {
 
@@ -307,8 +292,24 @@ gulp.task("preview", function() {
 	});
 });
 
+gulp.task('vendor', function() {
+	registerVendorTasks();
+	return gulp.start(tasks.vendor);
+});
+
 // COPIES STATIC BANNERS INTO HANDOFF FOLDER
 gulp.task('copy-static', function() {
 	return gulp.src('./assets/static-banners/*')
 		.pipe(gulp.dest('./5-handoff/static-backups/'));
+});
+
+gulp.task('zip-banners', ['copy-static'], function() {
+	registerHandoffTasks();
+	return gulp.start(tasks.handoff);
+});
+
+gulp.task('handoff', ['zip-banners'], function() {
+	return gulp.src('./5-handoff/**')
+		.pipe(plugins.zip('./' + client + '-' + project + '-' + 'handoff.zip'))
+		.pipe(gulp.dest('./'))
 });
