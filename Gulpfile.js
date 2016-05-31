@@ -215,7 +215,19 @@ function registerVendorTasks() {
 function registerHandoffTasks() {
 	tasks.handoff.forEach(function(handoffVendorConceptSize) {
 		gulp.task(handoffVendorConceptSize, function() {
-			console.log(handoffVendorConceptSize);
+			let vendor = handoffVendorConceptSize.match(/handoff-(.*)_/)[1],
+				concept = handoffVendorConceptSize.match(/_(.*)@/)[1],
+				size = handoffVendorConceptSize.match(/@(.*)/)[1],
+				bannerName = concept + '-' + size,
+				target = '4-vendor/vendor-' + vendor + '/' + bannerName + '/*',
+				destination = './5-handoff';
+
+			return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip').then(function() {
+
+				return gulp.src('./5-handoff/**')
+					.pipe(plugins.zip('./' + client + '-' + project + '-' + 'handoff.zip'))
+					.pipe(gulp.dest('./'))
+			});
 		});
 	});
 }
@@ -261,11 +273,10 @@ gulp.task('vendor', function() {
 	return gulp.start(tasks.vendor);
 });
 
-gulp.task('handoff', function() {
+gulp.task('handoff', ['copy-static'], function() {
 	registerHandoffTasks();
 	return gulp.start(tasks.handoff);
 });
-
 
 // Generate Client Preview
 gulp.task("preview", function() {
@@ -294,4 +305,10 @@ gulp.task("preview", function() {
 				.pipe(gulp.dest("./3-preview"));
 		});
 	});
+});
+
+// COPIES STATIC BANNERS INTO HANDOFF FOLDER
+gulp.task('copy-static', function() {
+	return gulp.src('./assets/static-banners/*')
+		.pipe(gulp.dest('./5-handoff/static-backups/'));
 });

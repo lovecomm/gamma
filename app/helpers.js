@@ -1,6 +1,8 @@
 "use strict";
 
 let fs = require('fs-extra'),
+	gulp = require('gulp'),
+	plugins = require('gulp-load-plugins')(),
 	camel = require('to-camel-case');
 
 module.exports = {
@@ -82,6 +84,15 @@ module.exports = {
 			  if (err) return reject(err)
 				return resolve(true);
 			})
+		});
+	},
+	zipDirs: function(target, destination, name) {
+		return new Promise(function(resolve, reject) {
+			gulp.src(target)
+				.pipe(plugins.zip(name))
+				.pipe(gulp.dest(destination))
+
+			return resolve(true);
 		});
 	}
 };
