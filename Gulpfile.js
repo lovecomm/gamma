@@ -1,193 +1,145 @@
 "use strict";
 
-var gulp 					 	= require('gulp'),
-		plugins 			 	= require('gulp-load-plugins')(),
-		fs 							= require('fs'),
-		path 						= require("path"),
-		camel 					= require('to-camel-case'),
-		del 						= require('del'),
-		date 					 	= new Date(),
-		runSequence			= require("run-sequence"),
- 		setup 					= require("./setup.json"),
-		client 					= setup["client"],
-		project 				= setup["project"],
-		concepts				= setup["concepts"],
-		sizes						= setup["sizes"],
-		vendors					= setup["vendors"],
-		hasStatics 			= setup["hasStatics"],
-		staticExtension = setup["staticExtension"],
-		globalImgPath   = "/assets/images/",
-		globalScriptsPath = "/assets/scripts/",
-		jsDependencies	= [],
-		imgDependencies = [],
-		bannerList = [];
+let gulp = require('gulp'),
+	_ = require('./lib/helpers.js'),
+	fs = require('fs-extra'),
+	plugins = require('gulp-load-plugins')(),
+	path = require("path"),
+	del = require('del'),
+	runSequence = require("run-sequence"),
+	config = require("./config.json"),
+	client = config["client"],
+	project = config["project"],
+	concepts = config["concepts"],
+	tasksPath = './lib/tasks.json',
+	tasks = require('./lib/tasks.json'),
+	sizes = config["sizes"],
+	vendors = config["vendors"],
+	hasStatics = config["hasStatics"],
+	staticExtension = config["staticExtension"],
+	globalImgPath = "../../../assets/images/",
+	globalScriptsPath = "../../../assets/scripts/",
+	jsDependencies = [];
 
-function isGenerated(dir, filename) {
-	var dircontents = fs.readdirSync(dir);
-	for (var i = 0; i < dircontents.length; i++) {
-		if(dircontents[i] == filename) { return true; }
-	}
-	return false;
-};
 
-function bannerSpecificImageDependencies(concept, size, destination, copy) {
-	var imgArray = []
-	var dircontents = fs.readdirSync("./assets/images/");
 
-	for (var i = 0; i < dircontents.length; i++) {
-		var filename = dircontents[i];
-		var conceptAndSize = concept + "-" + size.name;
-		var id = camel(filename.split('.')[0]);
-		var splithyphen = filename.split("-");
-		var layerName = splithyphen[splithyphen.length - 1].split(".")[0];
-
-		if( filename.indexOf( conceptAndSize ) > -1 ) {
-			imgArray.push({'fileName' : filename, 'id' : id, "layerName" : layerName});
-
-			if(copy) {
-				//copy images to banner specific folder
-				gulp.src("assets/images/" + filename)
-						.pipe(gulp.dest(destination));
-			}
-		}
-	}
-	return imgArray;
-};
-
+// START CLEANING TASK
 gulp.task("clean", function() {
-	gulp.src("./template-general.lodash")
+	return gulp.src("./templates/banner-general.lodash")
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
-			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-first-size dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-vendor dir.\n4. Files within the 4-handoff dir.\n5. All generated *.lodash templates.\n5. All files within the .dependencies dir.\n\n"
+			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the animated-masters/master-concepts dir.\n2. Files within the animated-resize dir.\n3. Files within the preview dir.\n4. All generated *.lodash templates.\n\n"
 		}, function(res) {
 			if(res.clean === true) {
-				del("1-first-size/*");
-				del("2-resize/*");
-				del("3-vendor/*");
-				del("4-handoff/*");
-				del(".dependencies/*");
+				del("animated-masters/master-concepts/*");
+				del("animated-resize/*");
+				del("preview/banners/*");
+				del("preview/assets/*");
+				del("preview/index.html");
 
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
 					if(concept) {
-						del("template-" + concept + ".lodash");
+						del("./templates/banner-" + concept + ".lodash");
 					}
 				}
 			}
 		}));
 });
-gulp.task("purge", function() { console.log("\n\ngulp purge is not a task. Did you mean gulp clean?\n\n")});
 
-// Install Bower dependencies
-gulp.task("bower", function() { return plugins.bower(); });
 
-// Move Bower dependencies to correct locations
-gulp.task("dep", ["bower"], function() {
 
-	// gulp.src(".dependencies/gsap/src/minified/easing/EasePack.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/plugins/CSSPlugin.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/TimelineMax.min.js").pipe(gulp.dest("assets/scripts"));
-	// gulp.src(".dependencies/gsap/src/minified/TweenLite.min.js").pipe(gulp.dest("assets/scripts"));
-
-	// preview dependencies
-	gulp.src(".dependencies/jquery/dist/jquery.min.js").pipe(gulp.dest("assets/preview-assets/"));
-});
-
-gulp.task("gather-script-assets", function() {
-
-	return fs.readdir('./assets/scripts', function(err, files) {
-		if(files) {
-			for (var i = 0; i < files.length; i++) {
-				var fileExtension = files[i].split('.').pop();
-				if (fileExtension == 'js') {
-					jsDependencies.push(files[i]);
-				}
-			}
-		} else {
-			console.log("NO JS File dependencies");
-		}
-	});
-});
-
-gulp.task("gather-img-assets", function() {
-	return fs.readdir('./assets/images', function(err, files) {
-		for (var i = 0; i < files.length; i++) {
-			var fileExtension = files[i].split('.').pop();
-			if (fileExtension == 'jpg' || fileExtension == 'png' || fileExtension == "gif") {
-				var fileName = files[i];
-				var id = camel(files[i].split('.')[0]);
-				imgDependencies.push({'fileName' : fileName, 'id' : id});
-			}
-		}
-	});
-});
-
-gulp.task("masters", function() {
-for( var c = 0; c < concepts.length; c++ ) {
-		if( !isGenerated("./1-first-size/", "master-" + concepts[c]) ) {
-
-			var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[0], "./1-first-size/master-" + concepts[c], false);
-
-			gulp.src('template-general.lodash')
-				.pipe(plugins.plumber(function(error) {
-						plugins.util.log(
-							plugins.util.colors.red(error.message),
-							plugins.util.colors.yellow('\r\nOn line: '+error.line),
-							plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-							);
-						this.emit('end');
-					}))
-				.pipe(plugins.consolidate('lodash', {
-					jsDependencies: jsDependencies,
-					imgDependencies: bannerSpecificImgDep,
-					imgPath: globalImgPath,
-					scriptsPath: globalScriptsPath,
-					bannerWidth: sizes[0].width,
-					bannerHeight: sizes[0].height,
-					conceptAndSize: "",
-					vendorScript: "<%= vendorScript %>",
-					vendorLink: "<%= vendorLink %>"
-				}))
-				.pipe(plugins.rename("index.html"))
-				.pipe(gulp.dest("./1-first-size/master-" + concepts[c]));
-
-		} else {
-			console.log("You've already generated the master for the " + concepts[c] + " concept. To re-generate, simply delete the 1-first-size/master-" + concepts[c] + " directory, and re-run this task.");
-		}
-	}
-
-	for( var c = 0; c < concepts.length; c++ ) {
-		gulp.src("template-general.lodash")
-		.pipe(plugins.rename("template-" + concepts[c] + ".lodash"))
+//START LOSELESS IMAGE MINIFICATION
+gulp.task("image-min", function() {
+	return gulp.src( ["./assets/images/**", "./assets/static-banners/**"], {base: "./"} )
+		.pipe(plugins.imagemin({
+			progressive: true,
+			interlaced: true,
+			svgoPlugins: [{removeUnknownsAndDefaults: false}, {cleanupIDs: false}]
+		}))
 		.pipe(gulp.dest("./"));
-	}
 });
+//END LOSELESS IMAGE MINIFICATION
 
-gulp.task("first-size", function(callback) {
-	if( !isGenerated("./1-first-size", "master-banner") ) {
-		runSequence("dep",
-              "gather-script-assets",
-              "gather-img-assets",
-              "masters",
-              callback);
-		console.log("\n\nNext steps: \nAnimate the first size of each of your concepts. Then, \n1. Copy your CUSTOM STYLES, CUSTOM DOM NODES, CUSTOM VARS, and TIMELINE from the first-size of each master banner to it's corresponding lodash template. \n\tAlso note, You may have used the height and width for various other styles or values in your timeline. To turn those into variables that will get converted into their correct sizes for each banner, change them to the lodash code, `<%= bannerWidth %>` and `<%= bannerHeight %>`.\n2.Run gulp resize. This takes everything you've done for each concept and copies it into each of the sizes you listed out in setup.json.\n\n")
-	} else {
-		console.log("\n\nYour master banner has already been generated. Proceed with animations there, then copy them into the template-general.lodash file, and then run the `gulp generate-sizes` task\n\n");
-	}
+
+
+//START CUSTOM DEPENDENCY RELOCATION
+gulp.task("dep", function() {
+	return gulp.src("./node_modules/jquery/dist/jquery.min.js").pipe(gulp.dest("./assets/scripts/"));
 });
-gulp.task("default", ["first-size"]);
+//END CUSTOM DEPENDENCY RELOCATION
 
-gulp.task("resize", ["gather-script-assets"], function(callback) {
-	for( var c = 0; c < concepts.length; c++ ) {
-		if( !isGenerated("./2-resize/", "concept-" + concepts[c]) ) {
-			for (var i = 0; i < sizes.length; i++) {
-				var bannerName = client + "-" + project + "-" + concepts[c] + "-" + sizes[i].name;
-				var bannerDirectory = "2-resize/concept-" + concepts[c] + "/";
-				var destination = bannerDirectory + bannerName;
-				var bannerSpecificImgDep = bannerSpecificImageDependencies(concepts[c], sizes[i], destination, false);
 
-				gulp.src("template-" + concepts[c] + ".lodash")
+
+//START BUILD GLOBAL JSFILES ARRAY
+gulp.task('get-js-files', function() {
+	return _.getJSFiles().then(function(data) {
+		jsDependencies = data;
+	}).catch(function(e) {
+		console.log(e);
+	});
+});
+//END BUILD GLOBAL JSFILES ARRAY
+
+
+
+// START GENERATE MASTER TASKS
+function registerMasterTasks() {
+	tasks.master.forEach(function(masterconcept) {
+		let concept = masterconcept.match(/master-(.+)/)[1];
+
+		if( !_.isGenerated('./animated-masters/master-concepts/', masterconcept) ) {
+
+			// Create individual templates for each concept. These will be used on resizes
+			gulp.src("./templates/banner-general.lodash")
+				.pipe(plugins.rename("./templates/banner-" + concept + ".lodash"))
+				.pipe(gulp.dest("./"));
+
+			gulp.task(masterconcept, function() {
+			 	return gulp.src('./templates/banner-general.lodash')
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+							);
+							this.emit('end');
+						}))
+					.pipe(plugins.consolidate('lodash', {
+						jsDependencies: jsDependencies,
+						imgDependencies: _.getImages(concept, sizes[0].name,  './animated-masters/master-concepts/' +  masterconcept, false),
+						imgPath: globalImgPath,
+						scriptsPath: globalScriptsPath,
+						bannerWidth: sizes[0].width,
+						bannerHeight: sizes[0].height,
+						vendorScript: '<%= vendorScript %>',
+						vendorLink: '<%= vendorLink %>'
+					}))
+					.pipe(plugins.rename('index.html'))
+					.pipe(gulp.dest('./animated-masters/master-concepts/' + masterconcept));
+			});
+		}
+	});
+}
+// END GENERATE MASTER TASKS
+
+// START GENERATE RESIZE TASKS
+function registerResizeTasks() {
+	tasks.resize.forEach(function(conceptSize) {
+		let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
+			concept = conceptSize.match(/(.*)-/)[1],
+			width = /(\d*)x/.exec(size)[1],
+			height = /x(\d*)/.exec(size)[1],
+			bannerName = concept + '-' + size,
+			bannerDirectory = 'animated-resize/concept-' + concept + '/',
+			destination = bannerDirectory + bannerName;
+
+		if (!_.isGenerated('./animated-resize/', 'concept-' + concept)) {
+
+			gulp.task(conceptSize, function() {
+
+				 gulp.src("./templates/banner-" + concept + ".lodash")
 					.pipe(plugins.plumber(function(error) {
 							plugins.util.log(
 								plugins.util.colors.red(error.message),
@@ -198,152 +150,178 @@ gulp.task("resize", ["gather-script-assets"], function(callback) {
 						}))
 					.pipe(plugins.consolidate('lodash', {
 						jsDependencies: jsDependencies,
-						imgDependencies: bannerSpecificImgDep,
+						imgDependencies: _.getImages(concept, size, destination, false),
 						imgPath: globalImgPath,
 						scriptsPath: globalScriptsPath,
-						bannerWidth: sizes[i].width,
-						bannerHeight: sizes[i].height,
-						conceptAndSize: concepts[c] + sizes[i].name,
+						bannerWidth: width,
+						bannerHeight: height,
 						vendorScript: "<%= vendorScript %>",
 						vendorLink: "<%= vendorLink %>"
 					}))
 					.pipe(plugins.rename("index.html"))
 					.pipe(gulp.dest(destination));
-			}
-		} else {
-			console.log("\n\nYou've already generated the " + concepts[c] + " concept in all sizes. To re-generate, simply delete the 2-resize/" + concepts[c] + " directory, and re-run this task.\n\n");
+			});
 		}
-	}
-	console.log("\n\nNext steps: \n1. Update your animations, clean up your DOM (if needed) for each size of each concept.\n2. Run `gulp vendor-copy`. This copies all of the banners you've animated already into vendor folders, for each vendor listed in setup.json. \n\n");
-});
+	});
+}
+// END GENERATE RESIZE TASKS
 
+// START GENERATE VENDOR TASKS
+function registerVendorTasks() {
+	tasks.vendor.forEach(function(vendorConceptSize) {
+		let vendor = vendorConceptSize.match(/(.*)_/)[1],
+			concept = vendorConceptSize.match(/.*_(.*)@/)[1],
+			size = vendorConceptSize.match(/.*@(.*)/)[1],
+			target = './animated-resize/concept-' + concept + '/' + concept + '-' + size,
+			destination = './lib/temp/vendor/' + vendor + '/' + concept + '-' + size,
+			script,
+			link;
 
-// COPIES ALL COMPLETED BANNERS INTO VENDOR SPECIFIC FOLDERS
-gulp.task("vendor-copy", function() {
-	for( var v = 0; v <= vendors.length; v++ ) {
-		if( vendors[v] !== undefined ) {
-			var vendorDir = "./3-vendor/vendor-" + vendors[v].name + "/"
-
-			for( var c = 0; c < concepts.length; c++ ) {
-				var concept = concepts[c];
-				gulp.src("2-resize/concept-" + concept + "/**/*.html")
-					.pipe(gulp.dest(vendorDir))
+		// get vendor specific details to add to banner
+		vendors.forEach(function(vendorFromConfig) {
+			if (vendorFromConfig.name === vendor) {
+				script = vendorFromConfig.script;
+				link = vendorFromConfig.link;
 			}
-		}
-	}
-	console.log("\n\nNext step: \nRun `gulp vendor-code`. This updates each of the banners to match the link and script dependencies for each vendor, also what you put in setup.json.\n\n");
-});
+		});
 
+		gulp.task(vendorConceptSize, function() {
+			return _.copyDir(target, destination).then(function() {
 
-// ADDS VENDOR SPECIFIC CODE TO EACH BANNER, COPIES SCRIPTS AND CORRESPONDING IMAGES TO EACH BANNER
-gulp.task("vendor-code", function() {
-	for( var v = 0; v <= vendors.length; v++ ) {
-		if( vendors[v] !== undefined ) {
-			var vendorDir = "./3-vendor/vendor-" + vendors[v].name + "/"
-
-			for( var c = 0; c < concepts.length; c++ ) {
-
-				for( var s = 0; s < sizes.length; s++ ) {
-					var bannerName =  client + "-" + project + "-" + concepts[c] + "-" + sizes[s].width + "x" + sizes[s].height
-					var bannerDir = vendorDir + bannerName + "/";
-
-					// Copy banner specific images into their respective directories
-					var bannerSpecificImgDep = bannerSpecificImageDependencies(	concepts[c], sizes[s], bannerDir, true );
-
-					// Add vendor specific info to each banner
-					gulp.src(bannerDir + "index.html", {base: "./"})
-						.pipe(plugins.plumber(function(error) {
-								plugins.util.log(
-									plugins.util.colors.red(error.message),
-									plugins.util.colors.yellow('\r\nOn line: '+error.line),
-									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-									);
-								this.emit('end');
-							}))
-						.pipe(plugins.consolidate('lodash', {
-							vendorScript: vendors[v].script,
-							vendorLink: vendors[v].link
+				return gulp.src(destination + '/index.html', {base: "./"})
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+								);
+							this.emit('end');
 						}))
-						.pipe(plugins.replace('/assets/images/', ''))
-						.pipe(plugins.replace('/assets/scripts/', ''))
-						.pipe(gulp.dest("./"));
+					.pipe(plugins.consolidate('lodash', {
+						vendorScript: script,
+						vendorLink: link
+					}))
+					.pipe(plugins.replace('../../../assets/images/', ''))
+					.pipe(plugins.replace('../../../assets/scripts/', ''))
+					.pipe(gulp.dest("./"));
+			});
+		});
+	});
+}
+// END GENERATE VENDOR TASKS
 
-					// Copy JS files to each banner directory
-					gulp.src("assets/scripts/*.js")
-					.pipe(gulp.dest(bannerDir))
-				}
-			}
-		}
-	}
-	console.log("\n\nNext step: \n1.Now's a good time to SEND OUT PREVIEW URLs.\nRun `gulp preview`. This generates an index.html file for your project that automatically inlines a link for each of the static and each of the HTML5 banners. If you copy this to somewhere else for someone to preview it, be sure to grab the **assets/preview-assets/** folder as well as the **assets/static-banners** and the **3-vendor** folders.\n\n");
+// START GENERATE HANDOFF TASKS
+function registerHandoffTasks() {
+	tasks.handoff.forEach(function(handoffVendorConceptSize) {
+		gulp.task(handoffVendorConceptSize, function() {
+			let vendor = handoffVendorConceptSize.match(/handoff-(.*)_/)[1],
+				concept = handoffVendorConceptSize.match(/_(.*)@/)[1],
+				size = handoffVendorConceptSize.match(/@(.*)/)[1],
+				bannerName = concept + '-' + size,
+				target = './lib/temp/vendor/' + vendor + '/' + bannerName + '/*',
+				destination = './lib/temp/handoff/';
+
+			return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip');
+		});
+	});
+}
+// END GENERATE HANDOFF TASKS
+
+gulp.task('default', function() {
+	return _.getTasksArray(concepts, undefined, 'master-').then(function(masterData) {
+		return _.getTasksArray(concepts, sizes, '-').then(function(sizeData) {
+			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
+				return _.getTasksArray(vendorConceptsData, sizes, '@').then(function(vendor) {
+					return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
+						// remove any tasks currently in the tasks.json file
+						delete tasks['master'];
+						delete tasks['resize'];
+						delete tasks['vendor'];
+						delete tasks['handoff'];
+
+						// Add generated task names to the tasks.json file
+						tasks.master = masterData;
+						tasks.resize = sizeData;
+						tasks.vendor = vendor;
+						tasks.handoff = handoff;
+						fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+
+						registerMasterTasks();
+						return runSequence('dep',
+					    ['get-js-files', 'image-min'],
+							tasks.master);
+					}).catch(function(e) { console.log(e); });
+				}).catch(function(e) { console.log(e); });
+			}).catch(function(e) { console.log(e); });
+		}).catch(function(e) { console.log(e); });
+	}).catch(function(e) { console.log(e); });
 });
 
+gulp.task('resize', ['get-js-files'], function() {
+	registerResizeTasks();
+	return gulp.start(tasks.resize);
+});
 
-// Generate index.html file for Client Preview
+// Generate Client Preview
 gulp.task("preview", function() {
-	gulp.src("index.lodash", {base: "./"})
-		.pipe(plugins.plumber(function(error) {
-				plugins.util.log(
-					plugins.util.colors.red(error.message),
-					plugins.util.colors.yellow('\r\nOn line: '+error.line),
-					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-					);
-				this.emit('end');
-			}))
-		.pipe(plugins.consolidate('lodash', {
-			client: client,
-			project: project,
-			sizes: sizes,
-			vendors: vendors,
-			concepts: concepts,
-			hasStatics: hasStatics,
-			staticExtension: staticExtension
-		}))
-		.pipe(plugins.rename("index.html"))
-		.pipe(gulp.dest("./"));
 
-	console.log("\n\nNext step: \n1.All approved? AWESOME! Go ahead and run `gulp zip-banners`. This will zip up each of the individual HTML5 banners.\n\n");
+	return _.copyDir('./animated-resize/', './preview/banners').then(function() {
+		return _.copyDir('./assets/', './preview/assets').then(function() {
+			return gulp.src("./templates/preview.lodash")
+				.pipe(plugins.plumber(function(error) {
+						plugins.util.log(
+							plugins.util.colors.red(error.message),
+							plugins.util.colors.yellow('\r\nOn line: '+error.line),
+							plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+							);
+						this.emit('end');
+					}))
+				.pipe(plugins.consolidate('lodash', {
+					client: client,
+					project: project,
+					sizes: sizes,
+					vendors: vendors,
+					concepts: concepts,
+					hasStatics: hasStatics,
+					staticExtension: staticExtension
+				}))
+				.pipe(plugins.rename("index.html"))
+				.pipe(gulp.dest("./preview"));
+		});
+	});
 });
 
-
-// COPIES STATIC BANNERS INTO HANDOFF FOLDER (CREATES HANDOFF FOLDER HERE)
-gulp.task("copy-static", function() {
-	return gulp.src("assets/static-banners/*")
-		.pipe(gulp.dest("./4-handoff/static-backups/"));
+gulp.task('vendor', function() {
+	registerVendorTasks();
+	return gulp.start(tasks.vendor);
 });
 
-
-// ZIPS UP EACH INDIVIDUAL BANNER
-gulp.task("zip-banners", ["copy-static"], function() {
-	// Copy all sizes of each concepts into vendor folder
-	// add to bannerList Array
-	for( var v = 0; v <= vendors.length; v++ ) {
-		if( vendors[v] !== undefined ) {
-			var vendorDir = "3-vendor/vendor-" + vendors[v].name + "/"
-
-			for( var c = 0; c < concepts.length; c++ ) {
-				var concept = concepts[c];
-
-				for( var s = 0; s < sizes.length; s++ ) {
-					// concept, size, destination, copy
-					var bannerName =  client + "-" + project + "-" + concepts[c] + "-" + sizes[s].width + "x" + sizes[s].height
-					var bannerDir = vendorDir + bannerName + "/";
-
-					// Zip every HTML5 banner with containing files
-					gulp.src(bannerDir + "*")
-						.pipe(plugins.zip("./" + vendors[v].name + "/" + bannerName + ".zip"))
-						.pipe(gulp.dest("./4-handoff"))
-						// .pipe(gulp.dest("./" + client + "-" + project + "-" + "handoff/"))
-				}
-			}
-		}
-	}
-	console.log("\n\nNext step: \n1.Run `gulp zip-handoff`. This will zip up all your zipped HTML5 banners as well as your static failovers/backups into one zipped file... mail that sucker. You win. You're Half-(wo)man, Half-amazing.\n\n");
+// COPIES STATIC BANNERS INTO HANDOFF FOLDER
+gulp.task('copy-static', function() {
+	return gulp.src('./assets/static-banners/*')
+		.pipe(gulp.dest('./lib/temp/handoff/static-backups/'));
 });
 
-// ZIP ENTIRE HANDOFF, READY TO EMAIL
-gulp.task("zip-handoff", function() {
-	return gulp.src("./4-handoff/**")
-		.pipe(plugins.zip("./" + client + "-" + project + "-" + "handoff.zip"))
-		.pipe(gulp.dest("./"))
+gulp.task('zip-banners', function() {
+	registerHandoffTasks();
+	return gulp.start(tasks.handoff);
+});
+
+gulp.task('zip-handoff', ['zip-banners'], function() {
+	return gulp.src('./lib/temp/handoff/**')
+		.pipe(plugins.zip(client + '-' + project + '-' + 'handoff.zip'))
+		.pipe(gulp.dest('./'))
+});
+
+gulp.task('clean-temp', function() {
+	return del("lib/temp");
+});
+
+gulp.task('handoff', function() {
+	return runSequence(
+		'vendor',
+		['copy-static', 'zip-banners'],
+		'zip-handoff',
+		'clean-temp'
+	);
 });

@@ -26,8 +26,8 @@
 			font-size: 16px;
 		}
 
-		a * { 
-			position: absolute; 
+		a * {
+			position: absolute;
 			z-index: 1;
 			border: none; /*This is to get rid of an IE rendering bug/reature/whatever that adds a read boarder to all of the child elements of the link tag*/
 		}
