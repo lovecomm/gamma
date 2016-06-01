@@ -303,13 +303,21 @@ gulp.task('copy-static', function() {
 		.pipe(gulp.dest('./5-handoff/static-backups/'));
 });
 
-gulp.task('zip-banners', ['copy-static'], function() {
+gulp.task('zip-banners', function() {
 	registerHandoffTasks();
 	return gulp.start(tasks.handoff);
 });
 
-gulp.task('handoff', ['zip-banners'], function() {
+gulp.task('zip-handoff', ['zip-banners'], function() {
 	return gulp.src('./5-handoff/**')
 		.pipe(plugins.zip('./' + client + '-' + project + '-' + 'handoff.zip'))
 		.pipe(gulp.dest('./'))
+});
+
+gulp.task('handoff', function() {
+	return runSequence(
+		'vendor',
+		['copy-static', 'zip-banners'],
+		'zip-handoff'
+	);
 });
