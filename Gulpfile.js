@@ -1,25 +1,24 @@
 "use strict";
 
 let gulp = require('gulp'),
-	_ = require('./app/helpers.js'),
+	_ = require('./lib/helpers.js'),
 	fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	path = require("path"),
 	del = require('del'),
-	date 	= new Date(),
 	runSequence = require("run-sequence"),
 	config = require("./config.json"),
 	client = config["client"],
 	project = config["project"],
 	concepts = config["concepts"],
-	tasksPath = './app/tasks.json',
-	tasks = require('./app/tasks.json'),
+	tasksPath = './lib/tasks.json',
+	tasks = require('./lib/tasks.json'),
 	sizes = config["sizes"],
 	vendors = config["vendors"],
 	hasStatics = config["hasStatics"],
 	staticExtension = config["staticExtension"],
-	globalImgPath = "../../assets/images/",
-	globalScriptsPath = "../../assets/scripts/",
+	globalImgPath = "../../../assets/images/",
+	globalScriptsPath = "../../../assets/scripts/",
 	jsDependencies = [];
 
 
@@ -30,14 +29,14 @@ gulp.task("clean", function() {
 		.pipe(plugins.prompt.prompt({
 			type: "confirm",
 			name: 'clean',
-			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the 1-masters/master-concepts dir.\n2. Files within the 2-resize dir.\n3. Files within the 3-preview dir.\n4. Files within the 4-vendor dir.\n5. Files within the 5-handoff dir.\n6. All generated *.lodash templates.\n\n"
+			message: "\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the animated-masters/master-concepts dir.\n2. Files within the animated-resize dir.\n3. Files within the preview dir.\n4. All generated *.lodash templates.\n\n"
 		}, function(res) {
 			if(res.clean === true) {
-				del("1-masters/master-concepts/*");
-				del("2-resize/*");
-				del("3-preview/banners/*");
-				del("4-vendor/*");
-				del("5-handoff/*");
+				del("animated-masters/master-concepts/*");
+				del("animated-resize/*");
+				del("preview/banners/*");
+				del("preview/assets/*");
+				del("preview/index.html");
 
 				for( var c = 0; c <= concepts.length; c++ ) {
 					var concept = concepts[c]
@@ -90,7 +89,7 @@ function registerMasterTasks() {
 	tasks.master.forEach(function(masterconcept) {
 		let concept = masterconcept.match(/master-(.+)/)[1];
 
-		if( !_.isGenerated('./1-masters/master-concepts/', masterconcept) ) {
+		if( !_.isGenerated('./animated-masters/master-concepts/', masterconcept) ) {
 
 			// Create individual templates for each concept. These will be used on resizes
 			gulp.src("./templates/banner-general.lodash")
@@ -109,7 +108,7 @@ function registerMasterTasks() {
 						}))
 					.pipe(plugins.consolidate('lodash', {
 						jsDependencies: jsDependencies,
-						imgDependencies: _.getImages(concept, sizes[0].name,  './1-masters/master-concepts/' +  masterconcept, false),
+						imgDependencies: _.getImages(concept, sizes[0].name,  './animated-masters/master-concepts/' +  masterconcept, false),
 						imgPath: globalImgPath,
 						scriptsPath: globalScriptsPath,
 						bannerWidth: sizes[0].width,
@@ -118,7 +117,7 @@ function registerMasterTasks() {
 						vendorLink: '<%= vendorLink %>'
 					}))
 					.pipe(plugins.rename('index.html'))
-					.pipe(gulp.dest('./1-masters/master-concepts/' + masterconcept));
+					.pipe(gulp.dest('./animated-masters/master-concepts/' + masterconcept));
 			});
 		}
 	});
@@ -130,13 +129,13 @@ function registerResizeTasks() {
 	tasks.resize.forEach(function(conceptSize) {
 		let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
 			concept = conceptSize.match(/(.*)-/)[1],
-			height = /(\d*)x/.exec(size)[1],
-			width = /x(\d*)/.exec(size)[1],
+			width = /(\d*)x/.exec(size)[1],
+			height = /x(\d*)/.exec(size)[1],
 			bannerName = concept + '-' + size,
-			bannerDirectory = '2-resize/concept-' + concept + '/',
+			bannerDirectory = 'animated-resize/concept-' + concept + '/',
 			destination = bannerDirectory + bannerName;
 
-		if (!_.isGenerated('./2-resize/', 'concept-' + concept)) {
+		if (!_.isGenerated('./animated-resize/', 'concept-' + concept)) {
 
 			gulp.task(conceptSize, function() {
 
@@ -173,8 +172,8 @@ function registerVendorTasks() {
 		let vendor = vendorConceptSize.match(/(.*)_/)[1],
 			concept = vendorConceptSize.match(/.*_(.*)@/)[1],
 			size = vendorConceptSize.match(/.*@(.*)/)[1],
-			target = './2-resize/concept-' + concept + '/' + concept + '-' + size,
-			destination = './4-vendor/vendor-' + vendor + '/' + concept + '-' + size,
+			target = './animated-resize/concept-' + concept + '/' + concept + '-' + size,
+			destination = './lib/temp/vendor/' + vendor + '/' + concept + '-' + size,
 			script,
 			link;
 
@@ -202,8 +201,8 @@ function registerVendorTasks() {
 						vendorScript: script,
 						vendorLink: link
 					}))
-					.pipe(plugins.replace('/assets/images/', ''))
-					.pipe(plugins.replace('/assets/scripts/', ''))
+					.pipe(plugins.replace('../../../assets/images/', ''))
+					.pipe(plugins.replace('../../../assets/scripts/', ''))
 					.pipe(gulp.dest("./"));
 			});
 		});
@@ -219,8 +218,8 @@ function registerHandoffTasks() {
 				concept = handoffVendorConceptSize.match(/_(.*)@/)[1],
 				size = handoffVendorConceptSize.match(/@(.*)/)[1],
 				bannerName = concept + '-' + size,
-				target = '4-vendor/vendor-' + vendor + '/' + bannerName + '/*',
-				destination = './5-handoff';
+				target = './lib/temp/vendor/' + vendor + '/' + bannerName + '/*',
+				destination = './lib/temp/handoff/';
 
 			return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip');
 		});
@@ -266,8 +265,8 @@ gulp.task('resize', ['get-js-files'], function() {
 // Generate Client Preview
 gulp.task("preview", function() {
 
-	return _.copyDir('./2-resize/', './3-preview/banners').then(function() {
-		return _.copyDir('./assets/', './3-preview/banners/assets').then(function() {
+	return _.copyDir('./animated-resize/', './preview/banners').then(function() {
+		return _.copyDir('./assets/', './preview/assets').then(function() {
 			return gulp.src("./templates/preview.lodash")
 				.pipe(plugins.plumber(function(error) {
 						plugins.util.log(
@@ -287,7 +286,7 @@ gulp.task("preview", function() {
 					staticExtension: staticExtension
 				}))
 				.pipe(plugins.rename("index.html"))
-				.pipe(gulp.dest("./3-preview"));
+				.pipe(gulp.dest("./preview"));
 		});
 	});
 });
@@ -300,7 +299,7 @@ gulp.task('vendor', function() {
 // COPIES STATIC BANNERS INTO HANDOFF FOLDER
 gulp.task('copy-static', function() {
 	return gulp.src('./assets/static-banners/*')
-		.pipe(gulp.dest('./5-handoff/static-backups/'));
+		.pipe(gulp.dest('./lib/temp/handoff/static-backups/'));
 });
 
 gulp.task('zip-banners', function() {
@@ -309,15 +308,20 @@ gulp.task('zip-banners', function() {
 });
 
 gulp.task('zip-handoff', ['zip-banners'], function() {
-	return gulp.src('./5-handoff/**')
-		.pipe(plugins.zip('./' + client + '-' + project + '-' + 'handoff.zip'))
+	return gulp.src('./lib/temp/handoff/**')
+		.pipe(plugins.zip(client + '-' + project + '-' + 'handoff.zip'))
 		.pipe(gulp.dest('./'))
+});
+
+gulp.task('clean-temp', function() {
+	return del("lib/temp");
 });
 
 gulp.task('handoff', function() {
 	return runSequence(
 		'vendor',
 		['copy-static', 'zip-banners'],
-		'zip-handoff'
+		'zip-handoff',
+		'clean-temp'
 	);
 });
