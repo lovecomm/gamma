@@ -5,10 +5,9 @@ Strategist is a CLI application to make generating HTML5 banners simple. It's bu
 
 * Allow you to put all your images and script into their respective **assets/*** directory, and when the time comes to package the banners, it will copy all images for each banner into it's corresponding directory.
 
-* It will create versions of your banners for each concept and each size. It will also version these for each vendor when the time comes for that.
-* When it versions your banners for each vendor, it will add the corresponding link and scripts for each vendor
+* It will create versions of your banners for each concept and each size. It will also version these for each vendor (with it's accompanying script and link) when generating the handoff.
 
-* It will package/zip all the HTML5 banners. Then it will copy all your static failovers/backups and backage those with the HTML5 zipped banners for a final handoff
+* It will package/zip all the HTML5 banners. Then it will copy all your static failovers/backups and package those with the HTML5 zipped banners for a final handoff
 
 ## config.json
 * This file is your new best friend. You will put all of your project information here. Such as...
@@ -30,23 +29,19 @@ Strategist is a CLI application to make generating HTML5 banners simple. It's bu
 	`concept-bannerWidthxbannerHeight-layerName.fileExtension`
 	**`Example: nowinslc-300x600-logo.png`**
 
-5. Now onto your JS files. Right now this project by default is set up to use GSAP's greensock animation library, as well as jQuery (Both via CDN — which is allowed for both DoubleClick and Adwords vendors). If you want something different or in addition, just run `bower install -S name-of-library`. Then locate the **dep** task within the **Gulpfile.js**. There you can follow what's already being done to make sure your library get's sent to the **assets/scripts/** directory. Also, if you decide to not use jQuery or GSAP, make sure you remove the CDN from within your `template-general.lodash` file.
+5. Now onto your JS files. Right now this project by default is set up to use GSAP's greensock animation library, as well as jQuery (Both via CDN — which is allowed for both DoubleClick and Adwords vendors). If you want something different or in addition, just run `bower install -S name-of-library`. Then locate the **dep** task within the **Gulpfile.js**. There you can follow what's already being done to make sure your library get's sent to the **assets/scripts/** directory. Also, if you decide to not use jQuery or GSAP, make sure you remove the CDN from within your `./.strategist/banner.lodash` template file.
 
 6. Dependencies all setup. Check! Moving on... Run `gulp default` or just `gulp`. This will generate the first size for each concept. As well as a new lodash template for each concept (you'll use this later).
 
 7. Animate the first size of each of your concepts.
 
-8. Now you'll need to copy your CUSTOM STYLES, CUSTOM DOM NODES, CUSTOM VARS, and TIMELINE from the animated-masters of each master banner to it's corresponding lodash template. (Wait?! What?! - Hey, it's job security) Moving on...
+8. Run `gulp resize`. This takes everything you've done for each concept and copies it into each of the sizes you listed out in **config.json**, with the code being updated for you to match the correct size and width for each banner. Keep in mind that each instance of `widthpx or heightpx` (example... `width: 300px` or `height: 600px`)is replaced with the generated banner's correct width and height.
 
-	*. You may have used the height and width for various other styles or values in your timeline. To turn those into variables that will get converted into their correct sizes for each banner, change them to the lodash code, `<%= bannerWidth %>` and `<%= bannerHeight %>`.
+9. Update your animations, clean up your DOM (if needed) for each size of each concept.
 
-9. Run `gulp resize`. This takes everything you've done for each concept and copies it into each of the sizes you listed out in **config.json**, with the code being updated for you to match the correct size and width for each banner.
+10. Now you're ready to send the files out for a **preview**. Run `gulp preview` to generate it. This generates a preview folder at the root directory of your Strategist project. Simply copy this folder to whatever server you'd like it to be reviewed on. It's index.html contains links for each of the static and  HTML5 banners. The links will open a lightbox.
 
-10. Update your animations, clean up your DOM (if needed) for each size of each concept.
-
-11. Now you're ready to send the files out for a **preview**. Run `gulp preview` to generate it. This generates an index.html file for your project that automatically inlines a link for each of the static and each of the HTML5 banners. The links will open a lightbox. then copy the generated preview folder to whatever server you'll be using to publicly preview the banners. Send the URL.
-
-12. All approved? AWESOME! Go ahead and run `gulp handoff`. This copies all of the banners you've animated already into `lib/temp/`, then updates each of the banners to match the link and script dependencies for each vendor you put in **config.json**. A zipped handoff is generated and put in the root dir of this project. 
+11. Ready to send to your Vendor/Network? AWESOME! Go ahead and run `gulp handoff`. This copies all of the banners you've animated already into `.strategist/temp/`, then updates each of the banners to match the link and script dependencies for each vendor you put in **config.json**. A zipped handoff is generated and put in the root dir of this project.
 
 ## Setting up your Image files for Strategist
 * Already outlined above, just make sure your image layers are all namespaced correctly in the following format: `concept-bannerWidthxbannerHeight-layerName.fileExtension`
