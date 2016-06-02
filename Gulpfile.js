@@ -126,52 +126,65 @@ function registerMasterTasks() {
 
 // START GENERATE RESIZE TASKS
 function registerResizeTasks() {
-	tasks.resize.forEach(function(conceptSize) {
-		let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
-			concept = conceptSize.match(/(.*)-/)[1],
-			width = /(\d*)x/.exec(size)[1],
-			height = /x(\d*)/.exec(size)[1],
-			bannerName = concept + '-' + size,
-			bannerDirectory = 'animated-resize/concept-' + concept + '/',
-			destination = bannerDirectory + bannerName,
-			firstConfigSize = sizes[0].name;
+	return new Promise(function(resolve, reject) {
+		tasks.resize.forEach(function(conceptSize) {
 
-		if (!_.isGenerated('./animated-resize/', 'concept-' + concept)) {
+			let size = conceptSize.match(/.*-(\d*x\d*)/)[1],
+				concept = conceptSize.match(/(.*)-/)[1],
+				width = /(\d*)x/.exec(size)[1],
+				height = /x(\d*)/.exec(size)[1],
+				bannerName = concept + '-' + size,
+				bannerDirectory = 'animated-resize/concept-' + concept + '/',
+				destination = bannerDirectory + bannerName,
+				firstConfigSize = sizes[0].name;
 
-			// If it's the first size, we don't want to regenerate it from the template b/c we've already developed this banner as a master. As such, we're just going to copy it from master-concepts/master-*
-			if( size === firstConfigSize ) {
-				console.log('its the first size!!!');
-				gulp.task(conceptSize, function() {
-					 return gulp.src('./animated-masters/master-concepts/master-' + concept + '/**')
-						.pipe(gulp.dest(destination));
-				});
-			} else {
-				// All non-master sizes are generated through the corresponding concept lodash template.
-				gulp.task(conceptSize, function() {
-					 return gulp.src('./templates/banner-' + concept + '.lodash')
-						.pipe(plugins.plumber(function(error) {
-								plugins.util.log(
-									plugins.util.colors.red(error.message),
-									plugins.util.colors.yellow('\r\nOn line: '+error.line),
-									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-									);
-								this.emit('end');
-							}))
-						.pipe(plugins.consolidate('lodash', {
-							jsDependencies: jsDependencies,
-							imgDependencies: _.getImages(concept, size, destination, false),
-							imgPath: globalImgPath,
-							scriptsPath: globalScriptsPath,
-							bannerWidth: width,
-							bannerHeight: height,
-							vendorScript: '<%= vendorScript %>',
-							vendorLink: '<%= vendorLink %>'
-						}))
-						.pipe(plugins.rename('index.html'))
-						.pipe(gulp.dest(destination));
+			if (!_.isGenerated('./animated-resize/', 'concept-' + concept)) {
+
+				console.log('before function');
+
+				return _.getResizeIncludes('./animated-masters/master-concepts/master-' + concept + '/index.html').then(function(includes) {
+					// let cssInclude = includes.css,
+					// 		htmlInclude = includes.html,
+					// 		jsInclude = includes.js;
+
+					console.log('done with function');
+
+					// If it's the first size, we don't want to regenerate it from the template b/c we've already developed this banner as a master. As such, we're just going to copy it from master-concepts/master-*
+					if( size === firstConfigSize ) {
+						gulp.task(conceptSize, function() {
+							 return gulp.src('./animated-masters/master-concepts/master-' + concept + '/**')
+								.pipe(gulp.dest(destination));
+						});
+					} else {
+						// All non-master sizes are generated through their corresponding concept lodash template.
+						gulp.task(conceptSize, function() {
+							 return gulp.src('./templates/banner-' + concept + '.lodash')
+								.pipe(plugins.plumber(function(error) {
+										plugins.util.log(
+											plugins.util.colors.red(error.message),
+											plugins.util.colors.yellow('\r\nOn line: '+error.line),
+											plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+											);
+										this.emit('end');
+									}))
+								.pipe(plugins.consolidate('lodash', {
+									jsDependencies: jsDependencies,
+									imgDependencies: _.getImages(concept, size, destination, false),
+									imgPath: globalImgPath,
+									scriptsPath: globalScriptsPath,
+									bannerWidth: width,
+									bannerHeight: height,
+									vendorScript: '<%= vendorScript %>',
+									vendorLink: '<%= vendorLink %>'
+								}))
+								.pipe(plugins.rename('index.html'))
+								.pipe(gulp.dest(destination));
+						});
+					}
 				});
 			}
-		}
+		});
+		resolve(true);
 	});
 }
 // END GENERATE RESIZE TASKS
@@ -268,8 +281,9 @@ gulp.task('default', function() {
 });
 
 gulp.task('resize', ['get-js-files'], function() {
-	registerResizeTasks();
-	return gulp.start(tasks.resize);
+	registerResizeTasks().then(function() {
+		return gulp.start(tasks.resize);
+	});
 });
 
 // Generate Client Preview
