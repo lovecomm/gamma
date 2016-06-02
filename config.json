@@ -1,10 +1,11 @@
 {
-	"client" : "",
-	"project" : "",
+	"client" : "sd",
+	"project" : "tuneup",
 	"hasStatics" : true,
-	"staticExtension" : "",
+	"staticExtension" : "jpg",
 	"concepts" : [
-		 ""
+		 "ac69",
+		 "electrical"
 	],
 	"sizes" : [
 		{

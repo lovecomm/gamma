@@ -2,8 +2,7 @@ node_modules
 .codekit-cache
 _creative
 .dependencies
-preview/**
-lib/temp/**
+./preview
 *.zip
 *.sass-cache
 assets/scripts/*

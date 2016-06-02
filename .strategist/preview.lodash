@@ -22,7 +22,7 @@
 							<% if (concept !== undefined) { %>
 								<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
 									<% if (size !== undefined) { %>
-										<li><a href="banners/assets/static-banners/<%= client %>-<%= project %>-<%= concept %>-<%= size.name %>.<%= staticExtension %>" class="gallery banner"><%= concept %>-<%= size.name %></a></li>
+										<li><a href="assets/static-banners/<%= client %>-<%= project %>-<%= concept %>-<%= size.name %>.<%= staticExtension %>" class="gallery banner"><%= concept %>-<%= size.name %></a></li>
 									<% } %>
 								<% } %>
 							<% } %>
@@ -36,7 +36,7 @@
 							<% if (concept !== undefined) { %>
 								<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
 									<% if (size !== undefined) { %>
-									<li><a class="html5 banner" href="banners/concept-<%= concept %>/<%= concept %>-<%= size.name %>/index.html" data-featherlight="iframe" data-featherlight-iframe-width="<%= size.width %>" data-featherlight-iframe-height="<%= size.height %>"><%= concept %>-<%= size.name %></a></li>
+									<li><a class="html5 banner" href="banners/<%= concept %>/<%= size.name %>/index.html" data-featherlight="iframe" data-featherlight-iframe-width="<%= size.width %>" data-featherlight-iframe-height="<%= size.height %>"><%= concept %>-<%= size.name %></a></li>
 								<% } %>
 							<% } %>
 						<% } %>

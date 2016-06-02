@@ -32,13 +32,10 @@
 			border: none; /*This is to get rid of an IE rendering bug/reature/whatever that adds a read boarder to all of the child elements of the link tag*/
 		}
 
-		/* START CSS HELPER CLASSES */
+		/* CSS HELPER CLASSES */
 		.valign { left: 0; right: 0; margin: auto; } /* Align a DOM element vertically */
 		.halign {	top: 0;	bottom: 0; margin: auto; } /* Align a DOM element horizontally */
-		/* END CSS HELPER CLASSES */
-
-		/* START CUSTOM STYLES */
-		/* END CUSTOM STYLES */
+		/* /CSS HELPER CLASSES */
 
 	</style>
 	<script type="text/javascript" src="https://s0.2mdn.net/ads/studio/cached_libs/tweenmax_1.18.0_499ba64a23378545748ff12d372e59e9_min.js"></script> <!-- DoubleClick Greensock CDN (TweenMax) -->
@@ -49,8 +46,6 @@
 	<a href="<%= vendorLink %>">
 		<% _.each(imgDependencies, function(imgFile) { %> <img src="<%= imgPath + imgFile.fileName %>" id="<%= imgFile.layerName %>" alt="<%= imgFile.layerName %>">
 		<% }); %>
-		<!-- START CUSTOM DOM NODES -->
-		<!-- END CUSTOM DOM NODES -->
   </a>
 
 <script>
@@ -60,11 +55,6 @@
 	var w = <%= bannerWidth %>; //Banner width
 <%_.each(imgDependencies, function(imgFile) { %>var <%= imgFile.layerName %> = document.getElementById('<%= imgFile.layerName %>');
 	<%});%>
-	// START CUSTOM VARS
-	// END CUSTOM VARS
-
-	// START TIMELINE
-	// END TIMELINE
 
 })();
 </script>

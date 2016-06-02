@@ -1,8 +1,8 @@
 "use strict";
 
-
 let fs = require('fs-extra'),
 	gulp = require('gulp'),
+	sys = require('sys'),
 	plugins = require('gulp-load-plugins')(),
 	camel = require('to-camel-case'),
 	htmlparser = require("htmlparser");
@@ -95,28 +95,6 @@ module.exports = {
 				.pipe(gulp.dest(destination))
 
 			return resolve(true);
-		});
-	},
-	getResizeIncludes: function(fullFilePath) {
-		return new Promise(function(resolve, reject) {
-
-			// fs.readFile(fullFilePath, (err, data) => {
-			//   if (err) throw err;
-			//
-			// 	let handler = new htmlparser.DefaultHandler(function (error, dom) {
-			// 		if (err) throw err;
-			// 	}, {
-			// 		verbose: true,
-			// 		ignoreWhitespace: false
-			// 	});
-			//
-			// 	parser = new htmlparser.Parser(handler);
-			// 	parser.parseComplete(data);
-			// 	sys.puts(sys.inspect(handler.dom, false, null));
-			// 	return resolve(true);
-			// });
-			console.log('in function');
-			return resolve(true)
 		});
 	}
 };
