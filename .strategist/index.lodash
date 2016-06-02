@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title><%= client %>: <%= project %>-<%= concept %>banners</title>
+</head>
+<body>
+	<header>
+		<h1><%= client %>: <%= project %>-<%= concept %>banners</h1>
+	</header>
+
+	<p>Click on the banner you're going to animate to go it's individual page.</p>
+	<ul>
+		<% for(var c = 0; c <= concepts.length; c++ ) { var concept = concepts[c]; %>
+				<% if (concept !== undefined) { %>
+					<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
+						<% if (size !== undefined) { %>
+						<li><a target="_blank" href="banners/<%= concept %>/<%= size.name %>/index.html"><%= concept %>-<%= size.name %></a></li>
+					<% } %>
+				<% } %>
+			<% } %>
+		<% } %>
+	</ul>
+</body>
+</html>

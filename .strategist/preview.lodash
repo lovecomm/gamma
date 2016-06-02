@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title><%= client %>: <%= project %>-<%= concept %> banners</title>
+	<title><%= client %>: <%= project %>-<%= concept %>banners</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,100,100italic,700,300,300italic' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="preview-assets/app.min.css">
 </head>
 <body>
 	<header>
-		<h1><%= client %>: <%= project %>-<%= concept %> banners</h1>
+		<h1><%= client %>: <%= project %>-<%= concept %>banners</h1>
 	</header>
 	<div class="wrapper">
 		<div class="main">

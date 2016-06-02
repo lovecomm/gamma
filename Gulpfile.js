@@ -7,6 +7,7 @@ let gulp = require('gulp'),
 	path = require("path"),
 	del = require('del'),
 	runSequence = require("run-sequence"),
+	browserSync	= require('browser-sync').create(),
 	config = require("./config.json"),
 	client = config["client"],
 	project = config["project"],
@@ -239,7 +240,30 @@ function registerHandoffTasks() {
 }
 // END GENERATE HANDOFF TASKS
 
-gulp.task('default', function() {
+
+gulp.task('index', function() {
+	return gulp.src("./.strategist/index.lodash")
+		.pipe(plugins.plumber(function(error) {
+				plugins.util.log(
+					plugins.util.colors.red(error.message),
+					plugins.util.colors.yellow('\r\nOn line: '+error.line),
+					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+					);
+				this.emit('end');
+			}))
+		.pipe(plugins.consolidate('lodash', {
+			client: client,
+			project: project,
+			sizes: sizes,
+			vendors: vendors,
+			concepts: concepts,
+		}))
+		.pipe(plugins.rename("index.html"))
+		.pipe(gulp.dest("./"));
+});
+
+
+gulp.task('default', ['index'], function() {
 	return _.getTasksArray(concepts, undefined, 'master-').then(function(masterData) {
 		return _.getTasksArray(concepts, sizes, '-').then(function(sizeData) {
 			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
@@ -261,7 +285,8 @@ gulp.task('default', function() {
 						return registerMasterTasks().then(function() {
 							return runSequence('dep',
 						    ['get-js-files', 'image-min'],
-								tasks.master);
+								tasks.master,
+								'watch');
 						});
 					}).catch(function(e) { console.log(e); });
 				}).catch(function(e) { console.log(e); });
@@ -341,4 +366,21 @@ gulp.task('handoff', function() {
 		'zip-handoff',
 		'clean-temp'
 	);
+});
+
+
+
+gulp.task('watch', function() {
+
+	// Serve files from this project's virtual host that has been configured with the server rendering this site
+	browserSync.init({
+		server: {
+        baseDir: "./"
+    },
+		logPrefix: client + '-' + project,
+		reloadOnRestart: true,
+		notify: true
+	});
+
+	gulp.watch( './banners/**/**/index.html' ).on("change", browserSync.reload);
 });
