@@ -133,34 +133,44 @@ function registerResizeTasks() {
 			height = /x(\d*)/.exec(size)[1],
 			bannerName = concept + '-' + size,
 			bannerDirectory = 'animated-resize/concept-' + concept + '/',
-			destination = bannerDirectory + bannerName;
+			destination = bannerDirectory + bannerName,
+			firstConfigSize = sizes[0].name;
 
 		if (!_.isGenerated('./animated-resize/', 'concept-' + concept)) {
 
-			gulp.task(conceptSize, function() {
-
-				 gulp.src("./templates/banner-" + concept + ".lodash")
-					.pipe(plugins.plumber(function(error) {
-							plugins.util.log(
-								plugins.util.colors.red(error.message),
-								plugins.util.colors.yellow('\r\nOn line: '+error.line),
-								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-								);
-							this.emit('end');
+			// If it's the first size, we don't want to regenerate it from the template b/c we've already developed this banner as a master. As such, we're just going to copy it from master-concepts/master-*
+			if( size === firstConfigSize ) {
+				console.log('its the first size!!!');
+				gulp.task(conceptSize, function() {
+					 return gulp.src('./animated-masters/master-concepts/master-' + concept + '/**')
+						.pipe(gulp.dest(destination));
+				});
+			} else {
+				// All non-master sizes are generated through the corresponding concept lodash template.
+				gulp.task(conceptSize, function() {
+					 return gulp.src('./templates/banner-' + concept + '.lodash')
+						.pipe(plugins.plumber(function(error) {
+								plugins.util.log(
+									plugins.util.colors.red(error.message),
+									plugins.util.colors.yellow('\r\nOn line: '+error.line),
+									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+									);
+								this.emit('end');
+							}))
+						.pipe(plugins.consolidate('lodash', {
+							jsDependencies: jsDependencies,
+							imgDependencies: _.getImages(concept, size, destination, false),
+							imgPath: globalImgPath,
+							scriptsPath: globalScriptsPath,
+							bannerWidth: width,
+							bannerHeight: height,
+							vendorScript: '<%= vendorScript %>',
+							vendorLink: '<%= vendorLink %>'
 						}))
-					.pipe(plugins.consolidate('lodash', {
-						jsDependencies: jsDependencies,
-						imgDependencies: _.getImages(concept, size, destination, false),
-						imgPath: globalImgPath,
-						scriptsPath: globalScriptsPath,
-						bannerWidth: width,
-						bannerHeight: height,
-						vendorScript: "<%= vendorScript %>",
-						vendorLink: "<%= vendorLink %>"
-					}))
-					.pipe(plugins.rename("index.html"))
-					.pipe(gulp.dest(destination));
-			});
+						.pipe(plugins.rename('index.html'))
+						.pipe(gulp.dest(destination));
+				});
+			}
 		}
 	});
 }
