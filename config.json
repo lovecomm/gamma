@@ -1,11 +1,11 @@
 {
-	"client" : "sd",
-	"project" : "tuneup",
+	"client" : "",
+	"project" : "",
 	"hasStatics" : true,
 	"staticExtension" : "jpg",
 	"concepts" : [
-		 "ac69",
-		 "electrical"
+		 "",
+		 ""
 	],
 	"sizes" : [
 		{
@@ -38,12 +38,20 @@
 		{
 			"name" : "dbclick",
 			"link" : "javascript:window.open(window.clickTag)",
-			"script" : "<script> var clickTag = '[ClickThroughURL]' </script>"
+			"scriptHeader" : "<script> var clickTag = '[ClickThroughURL]' </script>",
+			"scriptFooter" : ""
 		},
 		{
 			"name" : "adwords",
 			"link" : "#",
-			"script" : ""
+			"scriptHeader" : "",
+			"scriptFooter" : ""
+		},
+		{
+			"name" : "sizmek",
+			"link" : "#",
+			"scriptHeader" : "<script type='text/javascript' src='https://secure-ds.serving-sys.com/BurstingScript/EBLoader.js'></script>",
+			"scriptFooter" : "<script>document.getElementById('bannerLink').addEventListener('click', mainClickthrough); function mainClickthrough() { EB.clickthrough(); }</script>"
 		}
 	]
 }

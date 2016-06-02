@@ -2,7 +2,6 @@
 
 let fs = require('fs-extra'),
 	gulp = require('gulp'),
-	sys = require('sys'),
 	plugins = require('gulp-load-plugins')(),
 	camel = require('to-camel-case'),
 	htmlparser = require("htmlparser");
