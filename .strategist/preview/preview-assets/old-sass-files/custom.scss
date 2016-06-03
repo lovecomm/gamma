@@ -53,7 +53,7 @@
 			padding: 50px 50px 0;
 			margin-bottom: 50px;
 		}
-		
+
 		.wrapper { background: white; }
 
 		.main {
@@ -67,9 +67,9 @@
 			display: block;
 		}
 
-		strong {
-			font-weight: bold;
-		}
+		strong { font-weight: bold;	}
+
+		em { font-style: italic; }
 
 		.disclaimer {
 			font-weight: 300;
@@ -87,6 +87,10 @@
 			font-size: 22px;
 			font-weight: 600;
 			text-transform: uppercase;
+		}
+
+		.disclaimer h2 {
+			margin-top: 25px;
 		}
 
 		h3 {
@@ -136,14 +140,14 @@
 			font-size: 0px;
 		}
 
-		.featherlight-previous.reattached span::before { 
+		.featherlight-previous.reattached span::before {
 			content: "\e901";
 			color: white;
 			font-size: 32px;
 			text-shadow: 1px 1px 8px black;
 		}
 
-		.featherlight-next.reattached span::before { 
+		.featherlight-next.reattached span::before {
 			content: "\e902";
 			color: white;
 			font-size: 32px;
@@ -172,4 +176,3 @@
 		.featherlight-close-icon.reattached:hover::before { font-size: 30px; }
 
 		.featherlight-image { position: relative; z-index: 9999999; }
-		

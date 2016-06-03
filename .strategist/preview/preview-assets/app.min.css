@@ -1,5 +1,5 @@
 @charset "UTF-8";
-/* http://meyerweb.com/eric/tools/css/reset/ 
+/* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
 */
@@ -301,6 +301,8 @@ footer {
 strong {
   font-weight: bold; }
 
+em { font-style: italic; }
+
 .disclaimer {
   font-weight: 300;
   line-height: 1.5;
@@ -309,6 +311,8 @@ strong {
   /*font-style: italic;*/
   margin-bottom: 25px;
   border-radius: 5px; }
+
+	.disclaimer h2 { margin-top: 25px; }
 
 h2 {
   line-height: 2;

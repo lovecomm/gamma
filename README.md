@@ -47,6 +47,9 @@ Strategist is a CLI application to make generating HTML5 banners simple. It's bu
 * Already outlined above, just make sure your image layers are all namespaced correctly in the following format: `concept-bannerWidthxbannerHeight-layerName.fileExtension`
 *	**`Example: google-300x600-logo.png`**
 
+## Gulp Watch (Live-Reload)
+The `gulp watch` task starts automatically when you run `gulp default`. However, you will need to stop it (ctrl + c) before you can run the other tasks. To continue having your banners live-reload, simply run this task again.
+
 ## CSS Helper Classes
 In the template you will see a few css classes that you can add to your DOM elements to help with aligning. These include:
 * .valign - Align a DOM element vertically
