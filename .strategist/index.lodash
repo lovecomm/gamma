@@ -24,6 +24,7 @@
 				<ul>
 					<li><em>gulp clean</em>&mdash;Run this task if you'd like to start over. It clears out all your added files except files you may have placed in assets/*</li>
 					<li><em>gulp watch</em>&mdash;This task automatically runs after running <em>gulp default</em>. However, you will need to stop it (ctrl + c) before you can run the other tasks. To continue having your banners live-reload, simply run this task again.</li>
+					<li><em>gulp check-file-size</em>&mdash;This task automatically runs while running <em>gulp watch</em> AND each time you save a banner file. If you are over the max file size allotted for the banners, it will display a console warning with the size of banner (including html, js libs, and images–all compressed).</li>
 				</ul>
 				<br>
 			</div>

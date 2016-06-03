@@ -22,6 +22,7 @@
   "homepage": "",
   "devDependencies": {
     "browser-sync": "^2.12.10",
+    "colors": "^1.1.2",
     "del": "^2.2.0",
     "fs-extra": "^0.30.0",
     "gulp": "^3.9.0",
@@ -38,10 +39,8 @@
     "gulp-sass": "^2.3.1",
     "gulp-util": "^3.0.6",
     "gulp-zip": "^3.2.0",
-    "htmlparser": "^1.7.7",
     "lodash": "^3.10.1",
     "run-sequence": "^1.1.5",
-    "sys": "0.0.1",
     "to-camel-case": "^0.2.1"
   }
 }

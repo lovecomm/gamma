@@ -241,6 +241,39 @@ function registerHandoffTasks() {
 // END GENERATE HANDOFF TASKS
 
 
+// START GENERATE CHECK FILE SIZE TASKS
+function registerCheckfilesizeTasks() {
+	return new Promise(function(resolve, reject) {
+		tasks.checkfilesize.forEach(function(conceptSizeCheck) {
+			let concept = conceptSizeCheck.match(/\$(.*)-/)[1],
+				size = conceptSizeCheck.match(/\$.*-(.*)/)[1],
+				bannerName = concept + '-' + size,
+				bannerPath = './banners/' + concept + '/' + size,
+				tempPath = './.strategist/temp/checkfilesize/' + concept + '/' + size + '/',
+				zipPath = './.strategist/temp/zipcheck/';
+
+			if( _.isGenerated(bannerPath, 'index.html')) {
+				gulp.task(conceptSizeCheck, function() {
+					return _.copyDir(bannerPath, tempPath).then(function() {
+						_.getImages(concept, size, tempPath, true);
+						return _.copyDir('./assets/scripts', tempPath).then(function() {
+							return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
+								return _.checkFileSize(zipPath, bannerName + '.zip').then(function() {
+									del(tempPath + '**');
+									del(zipPath + concept + '-' + size + '.zip');
+								});
+							});
+						});
+					});
+				});
+			} else { gulp.task(conceptSizeCheck); } //this is here so that when the array of checkfilesize tasks is passed to gulp, if the banner hasen't been generated yet, it's resize task won't throw an error
+		});
+		return resolve(true);
+	});
+}
+// END GENERATE CHECK FILE SIZE TASKS
+
+
 gulp.task('index', function() {
 	return gulp.src("./.strategist/index.lodash")
 		.pipe(plugins.plumber(function(error) {
@@ -269,25 +302,29 @@ gulp.task('default', ['index'], function() {
 			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
 				return _.getTasksArray(vendorConceptsData, sizes, '@').then(function(vendor) {
 					return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
-						// remove any tasks currently in the tasks.json file
-						delete tasks['master'];
-						delete tasks['resize'];
-						delete tasks['vendor'];
-						delete tasks['handoff'];
+						return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
+							// remove any tasks currently in the tasks.json file
+							delete tasks['master'];
+							delete tasks['resize'];
+							delete tasks['vendor'];
+							delete tasks['handoff'];
+							delete tasks['checkfilesize']
 
-						// Add generated task names to the tasks.json file
-						tasks.master = masterData;
-						tasks.resize = sizeData;
-						tasks.vendor = vendor;
-						tasks.handoff = handoff;
-						fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+							// Add generated task names to the tasks.json file
+							tasks.master = masterData;
+							tasks.resize = sizeData;
+							tasks.vendor = vendor;
+							tasks.handoff = handoff;
+							tasks.checkfilesize = checkfilesize;
+							fs.writeFileSync(tasksPath, JSON.stringify(tasks));
 
-						return registerMasterTasks().then(function() {
-							return runSequence('dep',
-						    ['get-js-files', 'image-min'],
-								tasks.master,
-								'watch');
-						});
+							return registerMasterTasks().then(function() {
+								return runSequence('dep',
+							    ['get-js-files', 'image-min'],
+									tasks.master,
+									'watch');
+							});
+						}).catch(function(e) { console.log(e); });
 					}).catch(function(e) { console.log(e); });
 				}).catch(function(e) { console.log(e); });
 			}).catch(function(e) { console.log(e); });
@@ -383,8 +420,17 @@ gulp.task('watch', function() {
 	});
 
 	gulp.watch( ['./banners/**/**/index.html', './index.html', './preview/index.html'] ).on('change', browserSync.reload);
+	gulp.watch( './banners/**/**/index.html', ['check-file-size']);
 	gulp.watch( './.strategist/preview/preview-assets/sass/**', ['sass'] );
 	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
+});
+
+
+
+gulp.task('check-file-size', function() {
+	registerCheckfilesizeTasks().then(function() {
+		return gulp.start(tasks.checkfilesize);
+	});
 });
 
 

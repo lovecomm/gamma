@@ -57,3 +57,7 @@ The `gulp sass` task is available to compile the sass files that are used for bo
 In the template you will see a few css classes that you can add to your DOM elements to help with aligning. These include:
 * .valign - Align a DOM element vertically
 * .halign -	top: 0;	bottom: 0; margin: auto; - Align a DOM element horizontally
+
+
+##Checking file size.
+The `gulp check-file-size` task automatically runs while running `gulp watch` AND each time you save a banner file. If you are over the max file size allotted for the banners, it will display a console warning with the size of banner (including html, js libs, and images–all compressed).</li>

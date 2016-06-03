@@ -3,8 +3,10 @@
 let fs = require('fs-extra'),
 	gulp = require('gulp'),
 	plugins = require('gulp-load-plugins')(),
-	camel = require('to-camel-case'),
-	htmlparser = require("htmlparser");
+	colors = require('colors'),
+	config = require("../config.json"),
+	maxBannerSize = config['maxBannerSize'],
+	camel = require('to-camel-case');
 
 module.exports = {
 	isGenerated: function(dir, filename) {
@@ -90,16 +92,35 @@ module.exports = {
 			fs.copy(target, destination, function (err) {
 			  if (err) return reject(err)
 				return resolve(true);
-			})
+			});
 		});
 	},
 	zipDirs: function(target, destination, name) {
 		return new Promise(function(resolve, reject) {
-			gulp.src(target)
+
+		 return	gulp.src(target)
 				.pipe(plugins.zip(name))
 				.pipe(gulp.dest(destination))
+				.on('end', function() {
+					return resolve(true);
+				})
+		});
+	},
+	checkFileSize: function(path, file) {
+		console.log('in check file size');
+		return new Promise(function(resolve, reject) {
+			fs.stat(path + file, function(err, stat) {
+				if(err) console.log(err)
+				let sizeInKb = stat.size / 100,
+					bannerName = file.match(/(.*).zip/)[1];
 
-			return resolve(true);
+				// return resolve(sizeInKb);
+				if ( sizeInKb > maxBannerSize ) {
+					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(maxBannerSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
+				}
+
+				resolve(true);
+			});
 		});
 	}
 };

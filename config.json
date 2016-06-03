@@ -2,6 +2,7 @@
 	"client" : "",
 	"project" : "",
 	"hasStatics" : true,
+	"maxBannerSize" : 100,
 	"staticExtension" : "jpg",
 	"concepts" : [
 		 "",
