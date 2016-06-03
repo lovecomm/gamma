@@ -375,12 +375,51 @@ gulp.task('watch', function() {
 	// Serve files from this project's virtual host that has been configured with the server rendering this site
 	browserSync.init({
 		server: {
-        baseDir: "./"
+        baseDir: './'
     },
 		logPrefix: client + '-' + project,
 		reloadOnRestart: true,
 		notify: true
 	});
 
-	gulp.watch( './banners/**/**/index.html' ).on("change", browserSync.reload);
+	gulp.watch( ['./banners/**/**/index.html', './index.html', './preview/index.html'] ).on('change', browserSync.reload);
+	gulp.watch( './.strategist/preview/preview-assets/sass/**', ['sass'] );
+	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
+});
+
+
+
+// STYLE DEVELOPMENT TASK
+gulp.task('sass', function() {
+	if(!_.isGenerated('./preview', 'index.html')) {
+		return gulp.src( './.strategist/preview/preview-assets/sass/custom.scss' )
+			.pipe(plugins.plumber(function(error) {
+				plugins.util.log(
+					plugins.util.colors.red(error.message),
+					plugins.util.colors.yellow('\r\nOn line: '+error.line),
+					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+					);
+				this.emit('end');
+			}))
+			.pipe(plugins.sass())
+			.pipe(plugins.cssnano())
+			.pipe(plugins.rename('app.min.css'))
+			.pipe(gulp.dest( './.strategist/preview/preview-assets/' ))
+			.pipe(browserSync.stream());
+	} else {
+		return gulp.src( './preview/preview-assets/sass/custom.scss' )
+			.pipe(plugins.plumber(function(error) {
+				plugins.util.log(
+					plugins.util.colors.red(error.message),
+					plugins.util.colors.yellow('\r\nOn line: '+error.line),
+					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+					);
+				this.emit('end');
+			}))
+			.pipe(plugins.sass())
+			.pipe(plugins.cssnano())
+			.pipe(plugins.rename('app.min.css'))
+			.pipe(gulp.dest( './preview/preview-assets/' ))
+			.pipe(browserSync.stream());
+	}
 });

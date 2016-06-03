@@ -15,7 +15,7 @@
 			<div class="disclaimer">
 				<h2>Gulp Tasks Available:</h2>
 				<ul>
-					<li><em>gulp default</em>&mdash;If you've just run this task, animate the first size of each concept. The first size is the first size you have listed in <strong>config.json file.</strong></li>
+					<li><em>gulp default</em>&mdash;If you've just run this task, animate the first size of each concept. The first size is the first size you have listed in <strong>config.json</strong> file.</li>
 					<li><em>gulp resize</em>&mdash;Run this task after you've animated the first size of each concept. It will create all other sizes for each concept, based on the first animated size.</li>
 					<li><em>gulp preview</em>&mdash;Run this task to generate the preview that you may need to send out for review. </li>
 					<li><em>gulp handoff</em>&mdash;Run this task after you're ready to send the banners to a vendor or network.</li>

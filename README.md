@@ -50,6 +50,9 @@ Strategist is a CLI application to make generating HTML5 banners simple. It's bu
 ## Gulp Watch (Live-Reload)
 The `gulp watch` task starts automatically when you run `gulp default`. However, you will need to stop it (ctrl + c) before you can run the other tasks. To continue having your banners live-reload, simply run this task again.
 
+##Compiling preview/index Sass
+The `gulp sass` task is available to compile the sass files that are used for both './index.html' and './preview/index.html'. Please note that if `gulp preview` has already been run (and `./preview` exists), then gulp sass will compile the sass within './preview'. If not, then it will compile the sass within `./.strategist/preview`, preparatory for `./preview` being generated.
+
 ## CSS Helper Classes
 In the template you will see a few css classes that you can add to your DOM elements to help with aligning. These include:
 * .valign - Align a DOM element vertically

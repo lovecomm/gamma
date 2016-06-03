@@ -8,7 +8,13 @@ let fs = require('fs-extra'),
 
 module.exports = {
 	isGenerated: function(dir, filename) {
-		var dircontents = fs.readdirSync(dir);
+		let dircontents;
+		try {
+			dircontents = fs.readdirSync(dir);
+		} catch(err) {
+			return false
+		}
+
 		for (var i = 0; i < dircontents.length; i++) {
 			if(dircontents[i] == filename) { return true; }
 		}
