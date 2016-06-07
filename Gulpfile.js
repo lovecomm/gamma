@@ -5,6 +5,7 @@ let gulp = require('gulp'),
 	fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	path = require("path"),
+	colors = require('colors'),
 	del = require('del'),
 	runSequence = require("run-sequence"),
 	browserSync	= require('browser-sync').create(),
@@ -16,7 +17,6 @@ let gulp = require('gulp'),
 	tasks = require('./.strategist/tasks.json'),
 	sizes = config["sizes"],
 	vendors = config["vendors"],
-	hasStatics = config["hasStatics"],
 	staticExtension = config["staticExtension"],
 	globalImgPath = "../../../assets/images/",
 	globalScriptsPath = "../../../assets/scripts/",
@@ -30,7 +30,7 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: '\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the banners dir.\n\n2. The preview dir.\n\n3. The handoff dir and .zip'
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the banners dir.\n\n2. The preview dir.\n\n3. The handoff dir and .zip')
 		}, function(res) {
 			if(res.clean === true) {
 				del('./banners/*');
@@ -161,7 +161,7 @@ function registerResizeTasks() {
 				});
 			} else {
 				gulp.task(conceptSize, function() {
-					console.log('\nGenerating other sizes of ' + concept + ' concept based on the original animated size, ' + firstConfigSize + '\n');
+					console.log(colors.yellow('\nGenerating other sizes of ' + concept + ' concept based on the original animated size, ' + firstConfigSize + '\n'));
 				});
 			}
 		});
@@ -358,7 +358,6 @@ gulp.task("preview", function() {
 						sizes: sizes,
 						vendors: vendors,
 						concepts: concepts,
-						hasStatics: hasStatics,
 						staticExtension: staticExtension
 					}))
 					.pipe(plugins.rename("index.html"))
