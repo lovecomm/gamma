@@ -9,19 +9,30 @@ let gulp = require('gulp'),
 	del = require('del'),
 	runSequence = require("run-sequence"),
 	browserSync	= require('browser-sync').create(),
-	config = require("./config.json"),
-	client = config["client"],
-	project = config["project"],
+	config,
+	client,
+	project,
+	sizes,
+	vendors,
 	concepts = config["concepts"],
 	tasksPath = './.strategist/tasks.json',
 	tasks = require('./.strategist/tasks.json'),
-	sizes = config["sizes"],
-	vendors = config["vendors"],
-	staticExtension = config["staticExtension"],
 	globalImgPath = "../../../assets/images/",
 	globalScriptsPath = "../../../assets/scripts/",
 	jsDependencies = [];
 
+
+	// START CONFIG TASK
+	gulp.task('config', function() {
+		_.buildUserConfig().then(function(response) {
+			config = response,
+			client = response.client,
+			project = response.project,
+			sizes = response.sizes,
+			vendors = response.vendors;
+		});
+	});
+	// END CONFIG TASK
 
 
 // START CLEANING TASK

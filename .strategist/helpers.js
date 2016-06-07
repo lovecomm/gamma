@@ -6,6 +6,9 @@ let fs = require('fs-extra'),
 	colors = require('colors'),
 	config = require("../config.json"),
 	maxFileSize = config['maxFileSize'],
+	inquirer = require("inquirer"),
+	sizeOptions = require('./config/options/sizes.json'),
+	vendorOptions = require('./config/options/vendors.json'),
 	camel = require('to-camel-case');
 
 module.exports = {
@@ -21,6 +24,109 @@ module.exports = {
 			if(dircontents[i] == filename) { return true; }
 		}
 		return false;
+	},
+	buildUserConfig: function() {
+		let _ = this;
+		return new Promise(function(resolve, reject) {
+			let sizes = sizeOptions.map(function(size) {
+				return size.name;
+			});
+
+			let vendors = vendorOptions.map(function(vendor) {
+				return vendor.name;
+			});
+
+			inquirer.prompt([
+				{
+					type: 'input',
+					name: 'client',
+					message: 'Client Name?',
+					validate: function (answer) {
+			      if (answer.length < 1) {
+			        return 'You must enter the Client Name';
+			      }
+			      return true;
+			    }
+				}, {
+					type: 'input',
+					name: 'project',
+					message: 'Project Name? (This is a name that encompuses all concepts)',
+					validate: function (answer) {
+			      if (answer.length < 1) {
+			        return 'You must enter the Project Name';
+			      }
+			      return true;
+			    }
+				}, {
+					type: 'input',
+					name: 'conceptCount',
+					message: 'How many Concepts are in your project?',
+					validate: function (answer) {
+
+			      if ( isNaN(parseInt(answer)) ) {
+			        return 'You must select a numeric value.';
+			      }
+						return true;
+			    }
+				}, {
+					type: 'input',
+					name: 'maxFileSize',
+					message: 'What is the max file size for your HTML5 banners (in kb)?',
+					validate: function (answer) {
+
+			      if ( isNaN(parseInt(answer)) ) {
+			        return 'You must select a numeric value (in kb).';
+			      }
+						return true;
+			    }
+				}, {
+			    type: 'checkbox',
+			    message: 'Select Banner Sizes',
+			    name: 'sizes',
+			    choices: sizeOptions,
+			    validate: function (answer) {
+			      if (answer.length < 1) {
+			        return 'You must choose at least one size.';
+			      }
+			      return true;
+			    }
+				}, {
+			    type: 'checkbox',
+			    message: 'Select Vendors',
+			    name: 'vendors',
+			    choices: vendorOptions,
+			    validate: function (answer) {
+			      if (answer.length < 1) {
+			        return 'You must choose at least one vendor.';
+			      }
+			      return true;
+			    }
+			  }
+			]).then(function (answers) {
+				return _.findFullObject(answers.sizes, sizeOptions).then(function(sizes) {
+					return _.findFullObject(answers.vendors, vendorOptions).then(function(vendors) {
+						answers.sizes = sizes;
+						answers.vendors = vendors;
+						answers.maxFileSize = parseInt(answers.maxFileSize);
+					  resolve(JSON.stringify(answers, null, '  '));
+					});
+				});
+			});
+		});
+	},
+	findFullObject: function(shortList, longList) {
+		return new Promise(function(resolve, reject) {
+			let newList = [];
+			shortList.forEach(function(shortListItem) {
+				longList.forEach(function(longListItem) {
+
+					if (shortListItem == longListItem.name) {
+						newList.push(longListItem);
+					}
+				});
+			});
+			return resolve(newList);
+		});
 	},
 	getImages: function(concept, size, destination, copy) {
 			var imgArray = []
