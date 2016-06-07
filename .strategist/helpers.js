@@ -5,7 +5,7 @@ let fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	colors = require('colors'),
 	config = require("../config.json"),
-	maxBannerSize = config['maxBannerSize'],
+	maxFileSize = config['maxFileSize'],
 	camel = require('to-camel-case');
 
 module.exports = {
@@ -46,17 +46,22 @@ module.exports = {
 			}
 			return imgArray;
 	},
-	getJSFiles: function() {
+	getFiles: function(path, ext) {
 		return new Promise(function(resolve, reject) {
-			fs.readdir('./assets/scripts', function(err, files) {
+			fs.readdir(path, function(err, files) {
 
 				if(err) { return reject(err); }
 
 				let paths	= [];
 
-				paths = files.filter(function(file) {
-            return file.split('.').pop() == 'js';
-        });
+				// Allows us to only return an array of files with a certain file extension
+				if(ext) {
+					paths = files.filter(function(file) {
+	            return file.split('.').pop() == ext;
+	        });
+				} else {
+					paths = files;
+				}
 
 				return resolve(paths);
 			});
@@ -107,16 +112,14 @@ module.exports = {
 		});
 	},
 	checkFileSize: function(path, file) {
-		console.log('in check file size');
 		return new Promise(function(resolve, reject) {
 			fs.stat(path + file, function(err, stat) {
 				if(err) console.log(err)
 				let sizeInKb = stat.size / 100,
 					bannerName = file.match(/(.*).zip/)[1];
 
-				// return resolve(sizeInKb);
-				if ( sizeInKb > maxBannerSize ) {
-					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(maxBannerSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
+				if ( sizeInKb > maxFileSize ) {
+					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
 				}
 
 				resolve(true);

@@ -1,11 +1,8 @@
 {
 	"client" : "",
 	"project" : "",
-	"hasStatics" : true,
-	"maxBannerSize" : 100,
-	"staticExtension" : "jpg",
+	"maxFileSize" : 100,
 	"concepts" : [
-		 "",
 		 ""
 	],
 	"sizes" : [

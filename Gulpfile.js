@@ -67,8 +67,9 @@ gulp.task('dep', function() {
 
 //START BUILD GLOBAL JSFILES ARRAY
 gulp.task('get-js-files', function() {
-	return _.getJSFiles().then(function(data) {
+	return _.getFiles('./assets/scripts', 'js').then(function(data) {
 		jsDependencies = data;
+		console.log(jsDependencies)
 	}).catch(function(e) {
 		console.log(e);
 	});
@@ -343,25 +344,26 @@ gulp.task("preview", function() {
 	return _.copyDir('./.strategist/preview', './preview').then(function() {
 		return _.copyDir('./banners/', './preview/banners').then(function() {
 			return _.copyDir('./assets/', './preview/assets').then(function() {
-				return gulp.src("./.strategist/preview.lodash")
-					.pipe(plugins.plumber(function(error) {
-							plugins.util.log(
-								plugins.util.colors.red(error.message),
-								plugins.util.colors.yellow('\r\nOn line: '+error.line),
-								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-								);
-							this.emit('end');
+				return _.getFiles('./assets/static-banners', undefined).then(function(staticBannerFiles) {
+					return gulp.src("./.strategist/preview.lodash")
+						.pipe(plugins.plumber(function(error) {
+								plugins.util.log(
+									plugins.util.colors.red(error.message),
+									plugins.util.colors.yellow('\r\nOn line: '+error.line),
+									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+									);
+								this.emit('end');
+							}))
+						.pipe(plugins.consolidate('lodash', {
+							client: client,
+							project: project,
+							sizes: sizes,
+							concepts: concepts,
+							staticBannerFiles: staticBannerFiles
 						}))
-					.pipe(plugins.consolidate('lodash', {
-						client: client,
-						project: project,
-						sizes: sizes,
-						vendors: vendors,
-						concepts: concepts,
-						staticExtension: staticExtension
-					}))
-					.pipe(plugins.rename("index.html"))
-					.pipe(gulp.dest("./preview"));
+						.pipe(plugins.rename("index.html"))
+						.pipe(gulp.dest("./preview"));
+				});
 			});
 		});
 	});

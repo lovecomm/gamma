@@ -15,20 +15,16 @@
 			<p class="disclaimer">The <strong>Static Banners</strong> will open in a gallery like fashion, where you can click through each of them within the lightbox. However, the <strong>Animated Banners</strong> will have to be opened individually, but will still load in a&nbsp;lightbox.</p>
 
 			<div class="animated">
-				<% if (hasStatics === true) { %>
-					<h2>Static Banners</h2>
-					<ul>
-						<% for(var c = 0; c <= concepts.length; c++ ) { var concept = concepts[c]; %>
-							<% if (concept !== undefined) { %>
-								<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
-									<% if (size !== undefined) { %>
-										<li><a href="assets/static-banners/<%= client %>-<%= project %>-<%= concept %>-<%= size.name %>.<%= staticExtension %>" class="gallery banner"><%= concept %>-<%= size.name %></a></li>
-									<% } %>
-								<% } %>
-							<% } %>
+				<h2>Static Banners</h2>
+				<ul>
+					<% for(var i = 0; i <= staticBannerFiles.length; i++ ) { var banner = staticBannerFiles[i]; %>
+						<% if (banner !== undefined && banner.match(/^[^.].*$/) ) {
+							var bannerName = banner.match(client + '-' + project + '-' + '([a-zA-Za-z0-9]*-[0-9]*x[0-9]*)')[1];
+						%>
+							<li><a href="assets/static-banners/<%= banner %>" class="gallery banner"><%= bannerName %></a></li>
 						<% } %>
-					</ul>
-				<% } %>
+					<% } %>
+				</ul>
 
 				<h2>Animated Banners</h2>
 				<ul>
