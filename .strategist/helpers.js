@@ -58,57 +58,69 @@ module.exports = {
 			      return true;
 			    }
 				}, {
-					type: 'input',
-					name: 'conceptCount',
-					message: 'How many Concepts are in your project?',
-					validate: function (answer) {
-
-			      if ( isNaN(parseInt(answer)) ) {
-			        return 'You must select a numeric value.';
-			      }
-						return true;
-			    }
-				}, {
+				// 	type: 'input',
+				// 	name: 'conceptCount',
+				// 	message: 'How many Concepts are in your project?',
+				// 	validate: function (answer) {
+				//
+			  //     if ( isNaN(parseInt(answer)) ) {
+			  //       return 'You must select a number.';
+			  //     }
+				// 		return true;
+			  //   },
+				// 	filter: function(answer) {
+				// 		return parseInt(answer);
+				// 	}
+				// }, {
 					type: 'input',
 					name: 'maxFileSize',
 					message: 'What is the max file size for your HTML5 banners (in kb)?',
 					validate: function (answer) {
 
-			      if ( isNaN(parseInt(answer)) ) {
-			        return 'You must select a numeric value (in kb).';
-			      }
+						if ( isNaN(parseInt(answer)) ) {
+							return 'You must select a number.';
+						}
 						return true;
-			    }
+					},
+					filter: function(answer) {
+						return parseInt(answer);
+					}
 				}, {
-			    type: 'checkbox',
-			    message: 'Select Banner Sizes',
-			    name: 'sizes',
-			    choices: sizeOptions,
-			    validate: function (answer) {
-			      if (answer.length < 1) {
-			        return 'You must choose at least one size.';
-			      }
-			      return true;
-			    }
+					type: 'checkbox',
+					message: 'Select Banner Sizes',
+					name: 'sizes',
+					choices: sizeOptions,
+					validate: function (answer) {
+						if (answer.length < 1) {
+							return 'You must choose at least one size.';
+						}
+						return true;
+					}
 				}, {
-			    type: 'checkbox',
-			    message: 'Select Vendors',
-			    name: 'vendors',
-			    choices: vendorOptions,
-			    validate: function (answer) {
-			      if (answer.length < 1) {
-			        return 'You must choose at least one vendor.';
-			      }
-			      return true;
-			    }
-			  }
+					type: 'checkbox',
+					message: 'Select Vendors',
+					name: 'vendors',
+					choices: vendorOptions,
+					validate: function (answer) {
+						if (answer.length < 1) {
+							return 'You must choose at least one vendor.';
+						}
+						return true;
+					}
+				}
 			]).then(function (answers) {
-				return _.findFullObject(answers.sizes, sizeOptions).then(function(sizes) {
-					return _.findFullObject(answers.vendors, vendorOptions).then(function(vendors) {
-						answers.sizes = sizes;
-						answers.vendors = vendors;
-						answers.maxFileSize = parseInt(answers.maxFileSize);
-					  resolve(JSON.stringify(answers, null, '  '));
+
+				return _.promptForConcepts(answers.conceptCount).then(function(concepts) {
+					return _.findFullObject(answers.sizes, sizeOptions).then(function(sizes) {
+						return _.findFullObject(answers.vendors, vendorOptions).then(function(vendors) {
+
+							answers.concepts = concepts.filter(function(concept) {
+								return concept.length !== 0;
+							});
+							answers.sizes = sizes;
+							answers.vendors = vendors;
+						  resolve(JSON.stringify(answers, null, '  '));
+						});
 					});
 				});
 			});
@@ -126,6 +138,49 @@ module.exports = {
 				});
 			});
 			return resolve(newList);
+		});
+	},
+	promptForConcepts: function(count) {
+		return new Promise(function(resolve, reject) {
+			let concepts = [],
+				questionStart = [{
+					type: 'input',
+					name: 'concept',
+					message: 'What is the name of your first concept?',
+					validate: function (answer) {
+
+						if (answer.length < 1) {
+							return 'You must enter a name for the concept';
+						}
+						return true;
+					},
+				}],
+					questionContinue = [{
+						type: 'input',
+						name: 'concept',
+						message: 'Have another concept? Enter the name. No more concepts? Leave blank.'
+				}];
+
+			function finalConcept() {
+				return resolve(concepts);
+			}
+
+			function askOrPerformFinalAction(answer) {
+				concepts.push(answer.concept);
+
+				if( !answer.concept ) {
+					finalConcept(concepts);
+					return;
+				}
+
+				return inquirer.prompt(questionContinue).then(function(answer) {
+					askOrPerformFinalAction(answer);
+				});
+			}
+
+			inquirer.prompt(questionStart).then(function(answer) {
+				askOrPerformFinalAction(answer);
+			});
 		});
 	},
 	getImages: function(concept, size, destination, copy) {
