@@ -4,9 +4,8 @@ let fs = require('fs-extra'),
 	gulp = require('gulp'),
 	plugins = require('gulp-load-plugins')(),
 	colors = require('colors'),
-	config = require("../config.json"),
-	maxFileSize = config['maxFileSize'],
-	inquirer = require("inquirer"),
+	config = require('./config/config.json'),
+	inquirer = require('inquirer'),
 	sizeOptions = require('./config/options/sizes.json'),
 	vendorOptions = require('./config/options/vendors.json'),
 	camel = require('to-camel-case');
@@ -58,20 +57,6 @@ module.exports = {
 			      return true;
 			    }
 				}, {
-				// 	type: 'input',
-				// 	name: 'conceptCount',
-				// 	message: 'How many Concepts are in your project?',
-				// 	validate: function (answer) {
-				//
-			  //     if ( isNaN(parseInt(answer)) ) {
-			  //       return 'You must select a number.';
-			  //     }
-				// 		return true;
-			  //   },
-				// 	filter: function(answer) {
-				// 		return parseInt(answer);
-				// 	}
-				// }, {
 					type: 'input',
 					name: 'maxFileSize',
 					message: 'What is the max file size for your HTML5 banners (in kb)?',
@@ -113,13 +98,16 @@ module.exports = {
 				return _.promptForConcepts(answers.conceptCount).then(function(concepts) {
 					return _.findFullObject(answers.sizes, sizeOptions).then(function(sizes) {
 						return _.findFullObject(answers.vendors, vendorOptions).then(function(vendors) {
-
-							answers.concepts = concepts.filter(function(concept) {
-								return concept.length !== 0;
-							});
+							answers.concepts = concepts;
 							answers.sizes = sizes;
 							answers.vendors = vendors;
-						  resolve(JSON.stringify(answers, null, '  '));
+							config = answers;
+
+							fs.writeFile('.strategist/config/config.json', JSON.stringify(config, null, '  '), (err) => {
+								if (err) throw err;
+								console.log(colors.magenta(JSON.stringify(config, null, '  ')), colors.yellow('\n\nYour project config is listed above.\n\nIf this is inaccurate simply run `gulp clean` and then `gulp default` to regenerate it. Or, you can edit the file directly in `.strategist/config/config.json`.\n'));
+								resolve(config);
+							});
 						});
 					});
 				});
@@ -162,7 +150,9 @@ module.exports = {
 				}];
 
 			function finalConcept() {
-				return resolve(concepts);
+				return resolve(concepts.filter(function(concept) {
+					return concept.length !== 0;
+				}));
 			}
 
 			function askOrPerformFinalAction(answer) {
@@ -279,8 +269,8 @@ module.exports = {
 				let sizeInKb = stat.size / 100,
 					bannerName = file.match(/(.*).zip/)[1];
 
-				if ( sizeInKb > maxFileSize ) {
-					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
+				if ( sizeInKb > config.maxFileSize ) {
+					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(config.maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
 				}
 
 				resolve(true);

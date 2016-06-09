@@ -9,30 +9,12 @@ let gulp = require('gulp'),
 	del = require('del'),
 	runSequence = require("run-sequence"),
 	browserSync	= require('browser-sync').create(),
-	config,
-	client,
-	project,
-	sizes,
-	vendors,
-	concepts = config["concepts"],
 	tasksPath = './.strategist/tasks.json',
 	tasks = require('./.strategist/tasks.json'),
 	globalImgPath = "../../../assets/images/",
 	globalScriptsPath = "../../../assets/scripts/",
-	jsDependencies = [];
-
-
-	// START CONFIG TASK
-	gulp.task('config', function() {
-		_.buildUserConfig().then(function(response) {
-			config = response,
-			client = response.client,
-			project = response.project,
-			sizes = response.sizes,
-			vendors = response.vendors;
-		});
-	});
-	// END CONFIG TASK
+	jsDependencies = [],
+	config = require('./.strategist/config/config.json');
 
 
 // START CLEANING TASK
@@ -41,13 +23,18 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n\n1. Files within the banners dir.\n\n2. The preview dir.\n\n3. The handoff dir and .zip')
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n\n1. The generated config.\n\n2. Files within the banners dir.\n\n3. The preview dir.\n\n4. The handoff dir and .zip')
 		}, function(res) {
 			if(res.clean === true) {
 				del('./banners/*');
 				del('./preview');
-				del('./' + client + '-' + project + '-handoff');
-				del('./' + client + '-' + project + '-handoff.zip');
+				del('./' + config.client + '-' + config.project + '-handoff');
+				del('./' + config.client + '-' + config.project + '-handoff.zip');
+				let emptyObject = {};
+
+				fs.writeFile('.strategist/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+					if (err) throw err;
+				});
 			}
 		}));
 });
@@ -80,7 +67,6 @@ gulp.task('dep', function() {
 gulp.task('get-js-files', function() {
 	return _.getFiles('./assets/scripts', 'js').then(function(data) {
 		jsDependencies = data;
-		console.log(jsDependencies)
 	}).catch(function(e) {
 		console.log(e);
 	});
@@ -109,17 +95,17 @@ function registerMasterTasks() {
 							}))
 						.pipe(plugins.consolidate('lodash', {
 							jsDependencies: jsDependencies,
-							imgDependencies: _.getImages(concept, sizes[0].name,  './banners/' + concept + sizes[0].name, false),
+							imgDependencies: _.getImages(concept, config.sizes[0].name,  './banners/' + concept + config.sizes[0].name, false),
 							imgPath: globalImgPath,
 							scriptsPath: globalScriptsPath,
-							bannerWidth: sizes[0].width,
-							bannerHeight: sizes[0].height,
+							bannerWidth: config.sizes[0].width,
+							bannerHeight: config.sizes[0].height,
 							vendorScriptHeader: '<%= vendorScriptHeader %>',
 							vendorScriptFooter: '<%= vendorScriptFooter %>',
 							vendorLink: '<%= vendorLink %>'
 						}))
 						.pipe(plugins.rename('index.html'))
-						.pipe(gulp.dest('./banners/' + concept + '/' + sizes[0].name));
+						.pipe(gulp.dest('./banners/' + concept + '/' + config.sizes[0].name));
 				});
 			}
 		});
@@ -140,7 +126,7 @@ function registerResizeTasks() {
 				bannerName = size,
 				bannerDirectory = 'banners/' + concept + '/',
 				destination = bannerDirectory + bannerName,
-				firstConfigSize = sizes[0].name;
+				firstConfigSize = config.sizes[0].name;
 
 			// We don't need to re-generate the first size
 			if( size !== firstConfigSize ) {
@@ -161,12 +147,12 @@ function registerResizeTasks() {
 							vendorLink: '<%= vendorLink %>'
 						}))
 						.pipe(plugins.replace('300x600', size))
-						.pipe(plugins.replace('width=' + sizes[0].width, 'width=' + width))
-						.pipe(plugins.replace('height=' + sizes[0].height, 'height=' + height))
-						.pipe(plugins.replace(sizes[0].width + 'px', width + 'px'))
-						.pipe(plugins.replace(sizes[0].height + 'px', height + 'px'))
-						.pipe(plugins.replace('var w = ' + sizes[0].width, 'var h = ' + width))
-						.pipe(plugins.replace('var h = ' + sizes[0].height, 'var h = ' + height))
+						.pipe(plugins.replace('width=' + config.sizes[0].width, 'width=' + width))
+						.pipe(plugins.replace('height=' + config.sizes[0].height, 'height=' + height))
+						.pipe(plugins.replace(config.sizes[0].width + 'px', width + 'px'))
+						.pipe(plugins.replace(config.sizes[0].height + 'px', height + 'px'))
+						.pipe(plugins.replace('var w = ' + config.sizes[0].width, 'var h = ' + width))
+						.pipe(plugins.replace('var h = ' + config.sizes[0].height, 'var h = ' + height))
 						.pipe(plugins.rename('index.html'))
 						.pipe(gulp.dest(destination));
 
@@ -196,7 +182,7 @@ function registerVendorTasks() {
 				link;
 
 			// get vendor specific details to add to banner
-			vendors.forEach(function(vendorFromConfig) {
+			config.vendors.forEach(function(vendorFromConfig) {
 				if (vendorFromConfig.name === vendor) {
 					scriptHeader = vendorFromConfig.scriptHeader;
 					scriptFooter = vendorFromConfig.scriptFooter;
@@ -286,6 +272,43 @@ function registerCheckfilesizeTasks() {
 // END GENERATE CHECK FILE SIZE TASKS
 
 
+// START GENERATE CONFIG AND TASK ARRAYS
+gulp.task('build-strategist', function() {
+	return _.buildUserConfig().then(function(generatedConfig) {
+		config = generatedConfig;
+		return _.getTasksArray(config.concepts, undefined, 'master-').then(function(masterData) {
+			return _.getTasksArray(config.concepts, config.sizes, '-').then(function(sizeData) {
+				return _.getTasksArray(config.vendors, config.concepts, '_').then(function(vendorConceptsData) {
+					return _.getTasksArray(vendorConceptsData, config.sizes, '@').then(function(vendor) {
+						return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
+							return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
+								// remove any tasks currently in the tasks.json file
+								delete tasks['master'];
+								delete tasks['resize'];
+								delete tasks['vendor'];
+								delete tasks['handoff'];
+								delete tasks['checkfilesize'];
+
+								// Add generated task names to the tasks.json file
+								tasks.master = masterData;
+								tasks.resize = sizeData;
+								tasks.vendor = vendor;
+								tasks.handoff = handoff;
+								tasks.checkfilesize = checkfilesize;
+								fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+
+							}).catch(function(e) { console.log(e); });
+						}).catch(function(e) { console.log(e); });
+					}).catch(function(e) { console.log(e); });
+				}).catch(function(e) { console.log(e); });
+			}).catch(function(e) { console.log(e); });
+		}).catch(function(e) { console.log(e); });
+	}).catch(function(e) { console.log(e); });
+});
+// END GENERATE CONFIG AND TASK ARRAYS
+
+
+// START GENERATE INDEX FILE
 gulp.task('index', function() {
 	return gulp.src("./.strategist/index.lodash")
 		.pipe(plugins.plumber(function(error) {
@@ -297,51 +320,27 @@ gulp.task('index', function() {
 				this.emit('end');
 			}))
 		.pipe(plugins.consolidate('lodash', {
-			client: client,
-			project: project,
-			sizes: sizes,
-			vendors: vendors,
-			concepts: concepts,
+			client: config.client,
+			project: config.project,
+			sizes: config.sizes,
+			vendors: config.vendors,
+			concepts: config.concepts,
 		}))
 		.pipe(plugins.rename("index.html"))
 		.pipe(gulp.dest("./"));
 });
+// END GENERATE INDEX FILE
 
 
-gulp.task('default', ['index'], function() {
-	return _.getTasksArray(concepts, undefined, 'master-').then(function(masterData) {
-		return _.getTasksArray(concepts, sizes, '-').then(function(sizeData) {
-			return _.getTasksArray(vendors, concepts, '_').then(function(vendorConceptsData) {
-				return _.getTasksArray(vendorConceptsData, sizes, '@').then(function(vendor) {
-					return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
-						return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
-							// remove any tasks currently in the tasks.json file
-							delete tasks['master'];
-							delete tasks['resize'];
-							delete tasks['vendor'];
-							delete tasks['handoff'];
-							delete tasks['checkfilesize']
-
-							// Add generated task names to the tasks.json file
-							tasks.master = masterData;
-							tasks.resize = sizeData;
-							tasks.vendor = vendor;
-							tasks.handoff = handoff;
-							tasks.checkfilesize = checkfilesize;
-							fs.writeFileSync(tasksPath, JSON.stringify(tasks));
-
-							return registerMasterTasks().then(function() {
-								return runSequence('dep',
-							    ['get-js-files', 'image-min'],
-									tasks.master,
-									'watch');
-							});
-						}).catch(function(e) { console.log(e); });
-					}).catch(function(e) { console.log(e); });
-				}).catch(function(e) { console.log(e); });
-			}).catch(function(e) { console.log(e); });
-		}).catch(function(e) { console.log(e); });
-	}).catch(function(e) { console.log(e); });
+gulp.task('default', ['build-strategist'], function() {
+	return registerMasterTasks().then(function() {
+		return runSequence(
+			'index',
+			'dep',
+			['get-js-files', 'image-min'],
+			tasks.master,
+			'watch');
+	});
 });
 
 gulp.task('resize', ['get-js-files'], function() {
@@ -366,10 +365,10 @@ gulp.task("preview", function() {
 								this.emit('end');
 							}))
 						.pipe(plugins.consolidate('lodash', {
-							client: client,
-							project: project,
-							sizes: sizes,
-							concepts: concepts,
+							client: config.client,
+							project: config.project,
+							sizes: config.sizes,
+							concepts: config.concepts,
 							staticBannerFiles: staticBannerFiles
 						}))
 						.pipe(plugins.rename("index.html"))
@@ -400,7 +399,7 @@ gulp.task('zip-banners', function() {
 
 gulp.task('zip-handoff', ['zip-banners'], function() {
 	return gulp.src('./.strategist/temp/handoff/**')
-		.pipe(plugins.zip(client + '-' + project + '-' + 'handoff.zip'))
+		.pipe(plugins.zip(config.client + '-' + config.project + '-' + 'handoff.zip'))
 		.pipe(gulp.dest('./'))
 });
 
@@ -426,7 +425,7 @@ gulp.task('watch', function() {
 		server: {
         baseDir: './'
     },
-		logPrefix: client + '-' + project,
+		logPrefix: config.client + '-' + config.project,
 		reloadOnRestart: true,
 		notify: true
 	});
