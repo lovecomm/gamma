@@ -474,6 +474,8 @@ gulp.task('check-file-size', function() {
 		return gulp.start(tasks.checkfilesize);
 	});
 });
+gulp.task('size', ['check-file-size']);
+gulp.task('check-size', ['check-file-size']);
 
 
 
