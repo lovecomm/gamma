@@ -29,8 +29,8 @@ gulp.task('clean', function() {
 			if(res.clean === true) {
 				del('./banners/*');
 				del('./preview');
-				del('./' + config.client + '-' + config.project + '-handoff');
-				del('./' + config.client + '-' + config.project + '-handoff.zip');
+				del('./' + config.client + '-handoff');
+				del('./' + config.client + '-handoff.zip');
 				del('./index.html');
 				let emptyObject = {};
 
@@ -326,7 +326,6 @@ gulp.task('index-master', function() {
 		.pipe(plugins.consolidate('lodash', {
 			task: 'master',
 			client: config.client,
-			project: config.project,
 			sizes: config.sizes,
 			vendors: config.vendors,
 			concepts: config.concepts,
@@ -363,7 +362,6 @@ gulp.task('index-resize', function() {
 		.pipe(plugins.consolidate('lodash', {
 			task: 'resize',
 			client: config.client,
-			project: config.project,
 			sizes: config.sizes,
 			vendors: config.vendors,
 			concepts: config.concepts,
@@ -400,7 +398,6 @@ gulp.task("preview", function() {
 							}))
 						.pipe(plugins.consolidate('lodash', {
 							client: config.client,
-							project: config.project,
 							sizes: config.sizes,
 							concepts: config.concepts,
 							staticBannerFiles: staticBannerFiles
@@ -433,7 +430,7 @@ gulp.task('zip-banners', function() {
 
 gulp.task('zip-handoff', ['zip-banners'], function() {
 	return gulp.src('./.strategist/temp/handoff/**')
-		.pipe(plugins.zip(config.client + '-' + config.project + '-' + 'handoff.zip'))
+		.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
 		.pipe(gulp.dest('./'))
 });
 
@@ -459,7 +456,7 @@ gulp.task('watch', function() {
 		server: {
         baseDir: './'
     },
-		logPrefix: config.client + '-' + config.project,
+		logPrefix: config.client + '-banners',
 		reloadOnRestart: true,
 		notify: true
 	});

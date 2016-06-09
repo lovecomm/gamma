@@ -48,16 +48,6 @@ module.exports = {
 			    }
 				}, {
 					type: 'input',
-					name: 'project',
-					message: 'Project Name? (This is a name that encompuses all concepts)',
-					validate: function (answer) {
-			      if (answer.length < 1) {
-			        return 'You must enter the Project Name';
-			      }
-			      return true;
-			    }
-				}, {
-					type: 'input',
 					name: 'maxFileSize',
 					message: 'What is the max file size for your HTML5 banners (in kb)?',
 					validate: function (answer) {

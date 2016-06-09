@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title><%= client %>: <%= project %>-<%= concept %>banners</title>
+	<title><%= client %> banners</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,100,100italic,700,300,300italic' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="preview-assets/app.min.css">
 </head>
 <body>
 	<header>
-		<h1><%= client %>: <%= project %>-<%= concept %>banners</h1>
+		<h1><%= client %> banners</h1>
 	</header>
 	<div class="wrapper">
 		<div class="main">
@@ -19,7 +19,7 @@
 				<ul>
 					<% for(var i = 0; i <= staticBannerFiles.length; i++ ) { var banner = staticBannerFiles[i]; %>
 						<% if (banner !== undefined && banner.match(/^[^.].*$/) ) {
-							var bannerName = banner.match(client + '-' + project + '-' + '([a-zA-Za-z0-9]*-[0-9]*x[0-9]*)')[1];
+							var bannerName = banner.match(client + '-' + '([a-zA-Za-z0-9]*-[0-9]*x[0-9]*)')[1];
 						%>
 							<li><a href="assets/static-banners/<%= banner %>" class="gallery banner"><%= bannerName %></a></li>
 						<% } %>
