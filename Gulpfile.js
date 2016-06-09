@@ -11,8 +11,9 @@ let gulp = require('gulp'),
 	browserSync	= require('browser-sync').create(),
 	tasksPath = './.strategist/tasks.json',
 	tasks = require('./.strategist/tasks.json'),
-	globalImgPath = "../../../assets/images/",
-	globalScriptsPath = "../../../assets/scripts/",
+	globalImgPath = '../../../assets/images/',
+	globalScriptsPath = '../../../assets/scripts/',
+	viewScript = '<script src="../../../.strategist/jquery.min.js"></script><script src="../../../.strategist/view.js"></script>',
 	jsDependencies = [],
 	config = require('./.strategist/config/config.json');
 
@@ -23,13 +24,14 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n\n1. The generated config.\n\n2. Files within the banners dir.\n\n3. The preview dir.\n\n4. The handoff dir and .zip')
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. The generated config.\n2. Files within the banners dir.\n3. The preview dir.\n4. The handoff dir and .zip\n')
 		}, function(res) {
 			if(res.clean === true) {
 				del('./banners/*');
 				del('./preview');
 				del('./' + config.client + '-' + config.project + '-handoff');
 				del('./' + config.client + '-' + config.project + '-handoff.zip');
+				del('./index.html');
 				let emptyObject = {};
 
 				fs.writeFile('.strategist/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
@@ -57,7 +59,7 @@ gulp.task('image-min', function() {
 
 //START CUSTOM DEPENDENCY RELOCATION
 gulp.task('dep', function() {
-	return gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest('./assets/scripts/'));
+	// return gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest('./assets/scripts/'));
 });
 //END CUSTOM DEPENDENCY RELOCATION
 
@@ -102,7 +104,8 @@ function registerMasterTasks() {
 							bannerHeight: config.sizes[0].height,
 							vendorScriptHeader: '<%= vendorScriptHeader %>',
 							vendorScriptFooter: '<%= vendorScriptFooter %>',
-							vendorLink: '<%= vendorLink %>'
+							vendorLink: '<%= vendorLink %>',
+							viewScript: viewScript
 						}))
 						.pipe(plugins.rename('index.html'))
 						.pipe(gulp.dest('./banners/' + concept + '/' + config.sizes[0].name));
@@ -209,6 +212,7 @@ function registerVendorTasks() {
 						}))
 						.pipe(plugins.replace('../../../assets/images/', ''))
 						.pipe(plugins.replace('../../../assets/scripts/', ''))
+						.pipe(plugins.replace(viewScript, ''))
 						.pipe(gulp.dest("./"));
 				});
 			});
@@ -308,8 +312,8 @@ gulp.task('build-strategist', function() {
 // END GENERATE CONFIG AND TASK ARRAYS
 
 
-// START GENERATE INDEX FILE
-gulp.task('index', function() {
+// START GENERATE INDEX–MASTER FILE
+gulp.task('index-master', function() {
 	return gulp.src("./.strategist/index.lodash")
 		.pipe(plugins.plumber(function(error) {
 				plugins.util.log(
@@ -320,6 +324,7 @@ gulp.task('index', function() {
 				this.emit('end');
 			}))
 		.pipe(plugins.consolidate('lodash', {
+			task: 'master',
 			client: config.client,
 			project: config.project,
 			sizes: config.sizes,
@@ -329,13 +334,13 @@ gulp.task('index', function() {
 		.pipe(plugins.rename("index.html"))
 		.pipe(gulp.dest("./"));
 });
-// END GENERATE INDEX FILE
+// END GENERATE INDEX–MASTER FILE
 
 
 gulp.task('default', ['build-strategist'], function() {
 	return registerMasterTasks().then(function() {
 		return runSequence(
-			'index',
+			'index-master',
 			'dep',
 			['get-js-files', 'image-min'],
 			tasks.master,
@@ -343,9 +348,38 @@ gulp.task('default', ['build-strategist'], function() {
 	});
 });
 
+
+// START GENERATE INDEX–RESIZE FILE
+gulp.task('index-resize', function() {
+	return gulp.src("./.strategist/index.lodash")
+		.pipe(plugins.plumber(function(error) {
+				plugins.util.log(
+					plugins.util.colors.red(error.message),
+					plugins.util.colors.yellow('\r\nOn line: '+error.line),
+					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+					);
+				this.emit('end');
+			}))
+		.pipe(plugins.consolidate('lodash', {
+			task: 'resize',
+			client: config.client,
+			project: config.project,
+			sizes: config.sizes,
+			vendors: config.vendors,
+			concepts: config.concepts,
+		}))
+		.pipe(plugins.rename("index.html"))
+		.pipe(gulp.dest("./"));
+});
+// END GENERATE INDEX–RESIZE FILE
+
+
 gulp.task('resize', ['get-js-files'], function() {
 	return registerResizeTasks().then(function() {
-		return gulp.start(tasks.resize);
+		return runSequence(
+			'index-resize',
+			tasks.resize,
+			'watch');
 	});
 });
 
