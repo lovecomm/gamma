@@ -12,17 +12,17 @@ let fs = require('fs-extra'),
 
 module.exports = {
 	isGenerated: function(dir, filename) {
-		let dircontents;
-		try {
-			dircontents = fs.readdirSync(dir);
-		} catch(err) {
-			return false
-		}
-
-		for (var i = 0; i < dircontents.length; i++) {
-			if(dircontents[i] == filename) { return true; }
-		}
-		return false;
+		return new Promise(function(resolve, reject) {
+			fs.readdir(dir, function(err, files) {
+				if (err) return resolve(false);
+				for( let i = 0; i < files.length; i++ ) {
+					if( files[i] == filename ) {
+						return resolve(true);
+					}
+				}
+			});
+			return resolve(false)
+		});
 	},
 	buildUserConfig: function() {
 		let _ = this;
@@ -164,28 +164,31 @@ module.exports = {
 		});
 	},
 	getImages: function(concept, size, destination, copy) {
-			var imgArray = []
-			var dircontents = fs.readdirSync("./assets/images/");
+		return new Promise(function(resolve, reject) {
+			let imgArray = []
+			fs.readdir("./assets/images/", function(err, files) {
+				if (err) console.log(err);
+				for (let i = 0; i < files.length; i++) {
+					let filename = files[i],
+						conceptAndSize = concept + "-" + size,
+						id = camel(filename.split('.')[0]),
+						splithyphen = filename.split("-"),
+						layerName = splithyphen[splithyphen.length - 1].split(".")[0];
 
-			for (var i = 0; i < dircontents.length; i++) {
-				var filename = dircontents[i];
-				var conceptAndSize = concept + "-" + size;
-				var id = camel(filename.split('.')[0]);
-				var splithyphen = filename.split("-");
-				var layerName = splithyphen[splithyphen.length - 1].split(".")[0];
 
+					if( filename.indexOf( conceptAndSize ) > -1 ) {
+						imgArray.push({'fileName' : filename, 'id' : id, "layerName" : layerName});
 
-				if( filename.indexOf( conceptAndSize ) > -1 ) {
-					imgArray.push({'fileName' : filename, 'id' : id, "layerName" : layerName});
-
-					if(copy) {
-						//copy images to banner specific folder
-						gulp.src("assets/images/" + filename)
-							.pipe(gulp.dest(destination));
+						if(copy) {
+							//copy images to banner specific folder
+							gulp.src("assets/images/" + filename)
+								.pipe(gulp.dest(destination));
+						}
 					}
 				}
-			}
-			return imgArray;
+			});
+			return resolve(imgArray);
+		});
 	},
 	getFiles: function(path, ext) {
 		return new Promise(function(resolve, reject) {

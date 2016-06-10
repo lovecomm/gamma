@@ -24,7 +24,7 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. The generated config.\n2. Files within the banners dir.\n3. The preview dir.\n4. The handoff dir and .zip\n')
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. Files within the banners dir.\n2. The preview dir.\n3. The handoff dir. and .zip\n4. The generated config.\n5. The generated task arrays.\n6. The generated root index.html file.\n')
 		}, function(res) {
 			if(res.clean === true) {
 				del('./banners/*');
@@ -35,6 +35,10 @@ gulp.task('clean', function() {
 				let emptyObject = {};
 
 				fs.writeFile('.strategist/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+					if (err) throw err;
+				});
+
+				fs.writeFile('.strategist/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 			}
@@ -83,8 +87,7 @@ function registerMasterTasks() {
 		tasks.master.forEach(function(masterconcept) {
 			let concept = masterconcept.match(/master-(.+)/)[1];
 
-			if( !_.isGenerated('./banners/', concept) ) {
-
+			_.getImages(concept, config.sizes[0].name,  './banners/' + concept + config.sizes[0].name, false).then(function(imgArray) {
 				gulp.task(masterconcept, function() {
 				 	return gulp.src('./.strategist/banner.lodash')
 						.pipe(plugins.plumber(function(error) {
@@ -97,7 +100,7 @@ function registerMasterTasks() {
 							}))
 						.pipe(plugins.consolidate('lodash', {
 							jsDependencies: jsDependencies,
-							imgDependencies: _.getImages(concept, config.sizes[0].name,  './banners/' + concept + config.sizes[0].name, false),
+							imgDependencies: imgArray,
 							imgPath: globalImgPath,
 							scriptsPath: globalScriptsPath,
 							bannerWidth: config.sizes[0].width,
@@ -110,7 +113,7 @@ function registerMasterTasks() {
 						.pipe(plugins.rename('index.html'))
 						.pipe(gulp.dest('./banners/' + concept + '/' + config.sizes[0].name));
 				});
-			}
+			});
 		});
 		return resolve(true);
 	});
@@ -184,36 +187,38 @@ function registerVendorTasks() {
 				scriptFooter,
 				link;
 
-			// get vendor specific details to add to banner
-			config.vendors.forEach(function(vendorFromConfig) {
-				if (vendorFromConfig.name === vendor) {
-					scriptHeader = vendorFromConfig.scriptHeader;
-					scriptFooter = vendorFromConfig.scriptFooter;
-					link = vendorFromConfig.link;
-				}
-			});
+			_.getImages(concept, size, destination, true).then(function() {
+				// get vendor specific details to add to banner
+				config.vendors.forEach(function(vendorFromConfig) {
+					if (vendorFromConfig.name === vendor) {
+						scriptHeader = vendorFromConfig.scriptHeader;
+						scriptFooter = vendorFromConfig.scriptFooter;
+						link = vendorFromConfig.link;
+					}
+				});
 
-			gulp.task(vendorConceptSize, function() {
-				return _.copyDir(target, destination).then(function() {
+				gulp.task(vendorConceptSize, function() {
+					return _.copyDir(target, destination).then(function() {
 
-					return gulp.src(destination + '/index.html', {base: "./"})
-						.pipe(plugins.plumber(function(error) {
-								plugins.util.log(
-									plugins.util.colors.red(error.message),
-									plugins.util.colors.yellow('\r\nOn line: '+error.line),
-									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-									);
-								this.emit('end');
+						return gulp.src(destination + '/index.html', {base: "./"})
+							.pipe(plugins.plumber(function(error) {
+									plugins.util.log(
+										plugins.util.colors.red(error.message),
+										plugins.util.colors.yellow('\r\nOn line: '+error.line),
+										plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+										);
+									this.emit('end');
+								}))
+							.pipe(plugins.consolidate('lodash', {
+								vendorScriptHeader: scriptHeader,
+								vendorScriptFooter: scriptFooter,
+								vendorLink: link
 							}))
-						.pipe(plugins.consolidate('lodash', {
-							vendorScriptHeader: scriptHeader,
-							vendorScriptFooter: scriptFooter,
-							vendorLink: link
-						}))
-						.pipe(plugins.replace('../../../assets/images/', ''))
-						.pipe(plugins.replace('../../../assets/scripts/', ''))
-						.pipe(plugins.replace(viewScript, ''))
-						.pipe(gulp.dest("./"));
+							.pipe(plugins.replace('../../../assets/images/', ''))
+							.pipe(plugins.replace('../../../assets/scripts/', ''))
+							.pipe(plugins.replace(viewScript, ''))
+							.pipe(gulp.dest("./"));
+					});
 				});
 			});
 		});
@@ -253,22 +258,25 @@ function registerCheckfilesizeTasks() {
 				bannerPath = './banners/' + concept + '/' + size,
 				tempPath = './.strategist/temp/checkfilesize/' + concept + '/' + size + '/',
 				zipPath = './.strategist/temp/zipcheck/';
-
-			if( _.isGenerated(bannerPath, 'index.html')) {
-				gulp.task(conceptSizeCheck, function() {
-					return _.copyDir(bannerPath, tempPath).then(function() {
-						_.getImages(concept, size, tempPath, true);
-						return _.copyDir('./assets/scripts', tempPath).then(function() {
-							return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
-								return _.checkFileSize(zipPath, bannerName + '.zip').then(function() {
-									del(tempPath + '**');
-									del(zipPath + concept + '-' + size + '.zip');
+			_.isGenerated(bannerPath, 'index.html').then(function(generated) {
+				if(generated) {
+					console.log(generated);
+					return gulp.task(conceptSizeCheck, function() {
+						return _.copyDir(bannerPath, tempPath).then(function() {
+							_.getImages(concept, size, tempPath, true).then(function() {
+								return _.copyDir('./assets/scripts', tempPath).then(function() {
+									return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
+										return _.checkFileSize(zipPath, bannerName + '.zip').then(function() {
+											del(tempPath + '**');
+											del(zipPath + concept + '-' + size + '.zip');
+										});
+									});
 								});
 							});
 						});
 					});
-				});
-			} else { gulp.task(conceptSizeCheck); } //this is here so that when the array of checkfilesize tasks is passed to gulp, if the banner hasen't been generated yet, it's resize task won't throw an error
+				} else { return gulp.task(conceptSizeCheck); } //this is here so that when the array of checkfilesize tasks is passed to gulp, if the banner hasen't been generated yet, it's resize task won't throw an error
+			});
 		});
 		return resolve(true);
 	});
@@ -299,7 +307,9 @@ gulp.task('build-strategist', function() {
 								tasks.vendor = vendor;
 								tasks.handoff = handoff;
 								tasks.checkfilesize = checkfilesize;
-								fs.writeFileSync(tasksPath, JSON.stringify(tasks));
+								fs.writeFile(tasksPath, JSON.stringify(tasks), (err) => {
+									if (err) throw err;
+								});
 
 							}).catch(function(e) { console.log(e); });
 						}).catch(function(e) { console.log(e); });
@@ -442,8 +452,8 @@ gulp.task('handoff', function() {
 	return runSequence(
 		'vendor',
 		['copy-static', 'zip-banners'],
-		'zip-handoff',
-		'clean-temp'
+		'zip-handoff'
+		// 'clean-temp'
 	);
 });
 
@@ -481,35 +491,37 @@ gulp.task('check-size', ['check-file-size']);
 
 // STYLE DEVELOPMENT TASK
 gulp.task('sass', function() {
-	if(!_.isGenerated('./preview', 'index.html')) {
-		return gulp.src( './.strategist/preview/preview-assets/sass/custom.scss' )
-			.pipe(plugins.plumber(function(error) {
-				plugins.util.log(
-					plugins.util.colors.red(error.message),
-					plugins.util.colors.yellow('\r\nOn line: '+error.line),
-					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-					);
-				this.emit('end');
-			}))
-			.pipe(plugins.sass())
-			.pipe(plugins.cssnano())
-			.pipe(plugins.rename('app.min.css'))
-			.pipe(gulp.dest( './.strategist/preview/preview-assets/' ))
-			.pipe(browserSync.stream());
-	} else {
-		return gulp.src( './preview/preview-assets/sass/custom.scss' )
-			.pipe(plugins.plumber(function(error) {
-				plugins.util.log(
-					plugins.util.colors.red(error.message),
-					plugins.util.colors.yellow('\r\nOn line: '+error.line),
-					plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-					);
-				this.emit('end');
-			}))
-			.pipe(plugins.sass())
-			.pipe(plugins.cssnano())
-			.pipe(plugins.rename('app.min.css'))
-			.pipe(gulp.dest( './preview/preview-assets/' ))
-			.pipe(browserSync.stream());
-	}
+	return _.isGenerated('./preview', 'index.html').then(function(generated) {
+		if(!generated) {
+			return gulp.src( './.strategist/preview/preview-assets/sass/custom.scss' )
+				.pipe(plugins.plumber(function(error) {
+					plugins.util.log(
+						plugins.util.colors.red(error.message),
+						plugins.util.colors.yellow('\r\nOn line: '+error.line),
+						plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+						);
+					this.emit('end');
+				}))
+				.pipe(plugins.sass())
+				.pipe(plugins.cssnano())
+				.pipe(plugins.rename('app.min.css'))
+				.pipe(gulp.dest( './.strategist/preview/preview-assets/' ))
+				.pipe(browserSync.stream());
+		} else {
+			return gulp.src( './preview/preview-assets/sass/custom.scss' )
+				.pipe(plugins.plumber(function(error) {
+					plugins.util.log(
+						plugins.util.colors.red(error.message),
+						plugins.util.colors.yellow('\r\nOn line: '+error.line),
+						plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+						);
+					this.emit('end');
+				}))
+				.pipe(plugins.sass())
+				.pipe(plugins.cssnano())
+				.pipe(plugins.rename('app.min.css'))
+				.pipe(gulp.dest( './preview/preview-assets/' ))
+				.pipe(browserSync.stream());
+		}
+	});
 });
