@@ -97,9 +97,6 @@ function registerMasterTasks() {
 							scriptsPath: globalScriptsPath,
 							bannerWidth: config.sizes[0].width,
 							bannerHeight: config.sizes[0].height,
-							vendorScriptHeader: '<%= vendorScriptHeader %>',
-							vendorScriptFooter: '<%= vendorScriptFooter %>',
-							vendorLink: '<%= vendorLink %>',
 							viewScript: viewScript
 						}))
 						.pipe(plugins.rename('index.html'))
@@ -139,11 +136,6 @@ function registerResizeTasks() {
 									);
 								this.emit('end');
 							}))
-						.pipe(plugins.consolidate('lodash', {
-							vendorScriptHeader: '<%= vendorScriptHeader %>',
-							vendorScriptFooter: '<%= vendorScriptFooter %>',
-							vendorLink: '<%= vendorLink %>'
-						}))
 						.pipe(plugins.replace('300x600', size))
 						.pipe(plugins.replace('width=' + config.sizes[0].width, 'width=' + width))
 						.pipe(plugins.replace('height=' + config.sizes[0].height, 'height=' + height))
@@ -201,11 +193,10 @@ function registerVendorTasks() {
 										);
 									this.emit('end');
 								}))
-							.pipe(plugins.consolidate('lodash', {
-								vendorScriptHeader: scriptHeader,
-								vendorScriptFooter: scriptFooter,
-								vendorLink: link
-							}))
+							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->', scriptHeader))
+							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->', scriptFooter))
+							.pipe(plugins.replace('#DO_NOT_REMOVE:vendorLink', link))
+
 							.pipe(plugins.replace('../../../assets/images/', ''))
 							.pipe(plugins.replace('../../../assets/scripts/', ''))
 							.pipe(plugins.replace(viewScript, ''))

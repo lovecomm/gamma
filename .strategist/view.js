@@ -17,6 +17,9 @@
 					'flex-direction' : 'column',
 					'position' : 'relative'
 				});
+				$(this.self).find('#bannerLink').css({
+					'box-shadow' : '0px 0px 109px #888'
+				});
 			},
 			adjustHeight: function() {
 				$(this.self).height(this.height);
