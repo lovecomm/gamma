@@ -13,15 +13,21 @@ let fs = require('fs-extra'),
 module.exports = {
 	isGenerated: function(dir, filename) {
 		return new Promise(function(resolve, reject) {
+			let generated;
 			fs.readdir(dir, function(err, files) {
-				if (err) return resolve(false);
-				for( let i = 0; i < files.length; i++ ) {
-					if( files[i] == filename ) {
-						return resolve(true);
+				if (err) {
+					generated = false;
+				} else {
+					for( let i = 0; i < files.length; i++ ) {
+						if( files[i] == filename ) {
+							generated = true;
+						} else {
+							generated = false;
+						}
 					}
 				}
+				return resolve(generated);
 			});
-			return resolve(false)
 		});
 	},
 	buildUserConfig: function() {

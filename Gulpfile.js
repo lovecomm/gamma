@@ -258,12 +258,14 @@ function registerCheckfilesizeTasks() {
 				bannerPath = './banners/' + concept + '/' + size,
 				tempPath = './.strategist/temp/checkfilesize/' + concept + '/' + size + '/',
 				zipPath = './.strategist/temp/zipcheck/';
+
 			_.isGenerated(bannerPath, 'index.html').then(function(generated) {
+				console.log(generated);
 				if(generated) {
-					console.log(generated);
+					console.log('in generated if');
 					return gulp.task(conceptSizeCheck, function() {
 						return _.copyDir(bannerPath, tempPath).then(function() {
-							_.getImages(concept, size, tempPath, true).then(function() {
+							return _.getImages(concept, size, tempPath, true).then(function() {
 								return _.copyDir('./assets/scripts', tempPath).then(function() {
 									return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
 										return _.checkFileSize(zipPath, bannerName + '.zip').then(function() {
@@ -422,7 +424,7 @@ gulp.task("preview", function() {
 
 gulp.task('vendor', function() {
 	registerVendorTasks().then(function() {
-		return gulp.start(tasks.vendor);
+		return runSequence(tasks.vendor);
 	});
 });
 
@@ -434,7 +436,7 @@ gulp.task('copy-static', function() {
 
 gulp.task('zip-banners', function() {
 	registerHandoffTasks().then(function() {
-		return gulp.start(tasks.handoff);
+		return runSequence(tasks.handoff);
 	});
 });
 
@@ -452,8 +454,8 @@ gulp.task('handoff', function() {
 	return runSequence(
 		'vendor',
 		['copy-static', 'zip-banners'],
-		'zip-handoff'
-		// 'clean-temp'
+		'zip-handoff',
+		'clean-temp'
 	);
 });
 
@@ -481,7 +483,7 @@ gulp.task('watch', function() {
 
 gulp.task('check-file-size', function() {
 	registerCheckfilesizeTasks().then(function() {
-		return gulp.start(tasks.checkfilesize);
+		return runSequence(tasks.checkfilesize);
 	});
 });
 gulp.task('size', ['check-file-size']);
@@ -492,6 +494,7 @@ gulp.task('check-size', ['check-file-size']);
 // STYLE DEVELOPMENT TASK
 gulp.task('sass', function() {
 	return _.isGenerated('./preview', 'index.html').then(function(generated) {
+		console.log(generated);
 		if(!generated) {
 			return gulp.src( './.strategist/preview/preview-assets/sass/custom.scss' )
 				.pipe(plugins.plumber(function(error) {
