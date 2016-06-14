@@ -412,32 +412,22 @@ gulp.task('copy-static', function() {
 		.pipe(gulp.dest('./.strategist/temp/handoff/static-backups/'));
 });
 
-gulp.task('zip-banners', function() {
+gulp.task('handoff', ['vendor', 'copy-static'], function() {
 	registerHandoffTasks().then(function() {
-		return runSequence(tasks.handoff);
+		return _.runTasks(tasks.handoff).then(function() {
+			return gulp.src('./.strategist/temp/handoff/**')
+				.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
+				.pipe(gulp.dest('./'))
+				.on('end', function() {
+					return runSequence('clean-temp');
+				});
+		});
 	});
 });
 
-gulp.task('zip-handoff', ['zip-banners'], function() {
-	return gulp.src('./.strategist/temp/handoff/**')
-		.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
-		.pipe(gulp.dest('./'))
-});
-
 gulp.task('clean-temp', function() {
-	return del(".strategist/temp");
+	return del(".strategist/temp/**");
 });
-
-gulp.task('handoff', function() {
-	return runSequence(
-		'vendor',
-		['copy-static', 'zip-banners'],
-		'zip-handoff',
-		'clean-temp'
-	);
-});
-
-
 
 gulp.task('watch', function() {
 

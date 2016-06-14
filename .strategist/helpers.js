@@ -5,6 +5,7 @@ let fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	colors = require('colors'),
 	config = require('./config/config.json'),
+	runSequence = require("run-sequence"),
 	inquirer = require('inquirer'),
 	sizeOptions = require('./config/options/sizes.json'),
 	vendorOptions = require('./config/options/vendors.json'),
@@ -259,6 +260,13 @@ module.exports = {
 				.on('end', function() {
 					return resolve(true);
 				})
+		});
+	},
+	runTasks: function(arrOfTasks) {
+		return new Promise(function(resolve, reject) {
+			return runSequence(arrOfTasks, function() {
+				return resolve(true);
+			});
 		});
 	},
 	checkFileSize: function(path, file) {
