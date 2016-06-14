@@ -61,14 +61,6 @@ gulp.task('image-min', function() {
 
 
 
-//START CUSTOM DEPENDENCY RELOCATION
-gulp.task('dep', function() {
-	// return gulp.src('./node_modules/jquery/dist/jquery.min.js').pipe(gulp.dest('./assets/scripts/'));
-});
-//END CUSTOM DEPENDENCY RELOCATION
-
-
-
 //START BUILD GLOBAL JSFILES ARRAY
 gulp.task('get-js-files', function() {
 	return _.getFiles('./assets/scripts', 'js').then(function(data) {
@@ -348,7 +340,6 @@ gulp.task('default', ['build-strategist'], function() {
 	return registerMasterTasks().then(function() {
 		return runSequence(
 			'index-master',
-			'dep',
 			['get-js-files', 'image-min'],
 			tasks.master,
 			'watch');
