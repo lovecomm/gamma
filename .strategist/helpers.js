@@ -265,13 +265,11 @@ module.exports = {
 		return new Promise(function(resolve, reject) {
 			fs.stat(path + file, function(err, stat) {
 				if(err) console.log(err)
-				let sizeInKb = stat.size / 1000,
+				let sizeInKb = stat.size / 100,
 					bannerName = file.match(/(.*).zip/)[1];
-
 				if ( sizeInKb > config.maxFileSize ) {
 					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(config.maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
 				}
-
 				resolve(true);
 			});
 		});

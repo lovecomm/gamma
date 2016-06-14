@@ -259,25 +259,21 @@ function registerCheckfilesizeTasks() {
 				tempPath = './.strategist/temp/checkfilesize/' + concept + '/' + size + '/',
 				zipPath = './.strategist/temp/zipcheck/';
 
-			_.isGenerated(bannerPath, 'index.html').then(function(generated) {
-				console.log(generated);
-				if(generated) {
-					console.log('in generated if');
-					return gulp.task(conceptSizeCheck, function() {
+			gulp.task(conceptSizeCheck, function() {
+
+				return _.isGenerated(bannerPath, 'index.html').then(function(generated) {
+					if(generated) {
 						return _.copyDir(bannerPath, tempPath).then(function() {
 							return _.getImages(concept, size, tempPath, true).then(function() {
 								return _.copyDir('./assets/scripts', tempPath).then(function() {
 									return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
-										return _.checkFileSize(zipPath, bannerName + '.zip').then(function() {
-											del(tempPath + '**');
-											del(zipPath + concept + '-' + size + '.zip');
-										});
+										return _.checkFileSize(zipPath, bannerName + '.zip');
 									});
 								});
 							});
 						});
-					});
-				} else { return gulp.task(conceptSizeCheck); } //this is here so that when the array of checkfilesize tasks is passed to gulp, if the banner hasen't been generated yet, it's resize task won't throw an error
+					}
+				});
 			});
 		});
 		return resolve(true);
@@ -483,7 +479,7 @@ gulp.task('watch', function() {
 
 gulp.task('check-file-size', function() {
 	registerCheckfilesizeTasks().then(function() {
-		return runSequence(tasks.checkfilesize);
+		return runSequence(tasks.checkfilesize, 'clean-temp');
 	});
 });
 gulp.task('size', ['check-file-size']);
