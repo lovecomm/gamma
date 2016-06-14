@@ -265,7 +265,7 @@ module.exports = {
 		return new Promise(function(resolve, reject) {
 			fs.stat(path + file, function(err, stat) {
 				if(err) console.log(err)
-				let sizeInKb = stat.size / 100,
+				let sizeInKb = stat.size / 1000,
 					bannerName = file.match(/(.*).zip/)[1];
 
 				if ( sizeInKb > config.maxFileSize ) {
