@@ -24,11 +24,12 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. Files within the banners dir.\n2. The preview dir.\n3. The handoff dir. and .zip\n4. The generated config.\n5. The generated task arrays.\n6. The generated root index.html file.\n')
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. Files within the banners dir.\n2. The preview dirs.\n3. The handoff dir. and .zip\n4. The generated config.\n5. The generated task arrays.\n6. The generated root index.html file.\n')
 		}, function(res) {
 			if(res.clean === true) {
 				del('./banners/*');
 				del('./preview');
+				del('./preview-static');
 				del('./' + config.client + '-handoff');
 				del('./' + config.client + '-handoff.zip');
 				del('./index.html');
@@ -390,7 +391,8 @@ gulp.task("preview", function() {
 							client: config.client,
 							sizes: config.sizes,
 							concepts: config.concepts,
-							staticBannerFiles: staticBannerFiles
+							staticBannerFiles: staticBannerFiles,
+							staticOnly: false
 						}))
 						.pipe(plugins.rename("index.html"))
 						.pipe(gulp.dest("./preview"));
@@ -399,6 +401,33 @@ gulp.task("preview", function() {
 		});
 	});
 });
+
+// START GENERATE STATIC-ONLY CLIENT PREVIEW
+gulp.task("preview-static", function() {
+	return _.copyDir('./.strategist/preview', './preview-static').then(function() {
+		return _.copyDir('./assets/', './preview-static/assets').then(function() {
+			return _.getFiles('./assets/static-banners', undefined).then(function(staticBannerFiles) {
+				return gulp.src("./.strategist/preview.lodash")
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+								);
+							this.emit('end');
+						}))
+					.pipe(plugins.consolidate('lodash', {
+						client: config.client,
+						staticBannerFiles: staticBannerFiles,
+						staticOnly: true
+					}))
+					.pipe(plugins.rename("index.html"))
+					.pipe(gulp.dest("./preview-static"));
+			});
+		});
+	});
+});
+// START GENERATE STATIC-ONLY CLIENT PREVIEW
 
 gulp.task('vendor', function() {
 	registerVendorTasks().then(function() {

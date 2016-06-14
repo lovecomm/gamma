@@ -26,18 +26,20 @@
 					<% } %>
 				</ul>
 
-				<h2>Animated Banners</h2>
-				<ul>
-					<% for(var c = 0; c <= concepts.length; c++ ) { var concept = concepts[c]; %>
-							<% if (concept !== undefined) { %>
-								<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
-									<% if (size !== undefined) { %>
-									<li><a class="html5 banner" href="banners/<%= concept %>/<%= size.name %>/index.html" data-featherlight="iframe" data-featherlight-iframe-width="<%= size.width %>" data-featherlight-iframe-height="<%= size.height %>"><%= concept %>-<%= size.name %></a></li>
+				<% if(!staticOnly) { %>
+					<h2>Animated Banners</h2>
+					<ul>
+						<% for(var c = 0; c <= concepts.length; c++ ) { var concept = concepts[c]; %>
+								<% if (concept !== undefined) { %>
+									<% for(var s = 0; s <= sizes.length; s++ ) { var size = sizes[s]; %>
+										<% if (size !== undefined) { %>
+										<li><a class="html5 banner" href="banners/<%= concept %>/<%= size.name %>/index.html" data-featherlight="iframe" data-featherlight-iframe-width="<%= size.width %>" data-featherlight-iframe-height="<%= size.height %>"><%= concept %>-<%= size.name %></a></li>
+									<% } %>
 								<% } %>
 							<% } %>
 						<% } %>
-					<% } %>
-				</ul>
+					</ul>
+				<% } %>
 			</div>
 		</div>
 	</div>

@@ -43,6 +43,8 @@ Strategist is a CLI application to make generating HTML5 banners simple. It's bu
 #### Handoff
 10. Ready to send to your Vendor/Network? AWESOME! Go ahead and run `gulp handoff`. This copies all of the banners you've animated already into `.strategist/temp/`, then updates each of the banners to match the link and script dependencies for each vendor you put in **config.json**. A zipped handoff is generated and put in the root dir of this project.
 
+## Preview-Static Only
+* Run `gulp preview-static` to generate a preview for only your static/failover banners. This is useful when you want make sure failover versions are signed–off before proceeding with animation. Before running this, be sure that your static banners are in the `assets/static-banners` directory.
 
 ## Gulp Watch (Live-Reload)
 The `gulp watch` task starts automatically when you run `gulp default` and `gulp resize`. However, you will need to stop it (ctrl + c) before you can run the other tasks. To continue live-reloading your banners, simply run this task again.
