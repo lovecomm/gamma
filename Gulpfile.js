@@ -232,6 +232,33 @@ function registerHandoffTasks() {
 // END GENERATE HANDOFF TASKS
 
 
+// START GENERATE PREVIEW TASKS
+function registerPreviewTasks() {
+	return new Promise(function(resolve, reject) {
+		tasks.preview.forEach(function(conceptSizePreview) { //preview-CONCEPT-300x600
+			let concept = conceptSizePreview.match(/preview-(.*)-/)[1],
+				size = conceptSizePreview.match(/preview-.*-(.*)/)[1];
+
+			gulp.task(conceptSizePreview, function() {
+				return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
+				.pipe(plugins.plumber(function(error) {
+						plugins.util.log(
+							plugins.util.colors.red(error.message),
+							plugins.util.colors.yellow('\r\nOn line: '+error.line),
+							plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+							);
+						this.emit('end');
+					}))
+				.pipe(plugins.replace(viewScript, ''))
+				.pipe(gulp.dest('./'));
+			});
+		});
+		return resolve(true);
+	});
+}
+// END GENERATE PREVIEW TASKS
+
+
 // START GENERATE CHECK FILE SIZE TASKS
 function registerCheckfilesizeTasks() {
 	return new Promise(function(resolve, reject) {
@@ -276,23 +303,27 @@ gulp.task('build-strategist', function() {
 					return _.getTasksArray(vendorConceptsData, config.sizes, '@').then(function(vendor) {
 						return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
 							return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
-								// remove any tasks currently in the tasks.json file
-								delete tasks['master'];
-								delete tasks['resize'];
-								delete tasks['vendor'];
-								delete tasks['handoff'];
-								delete tasks['checkfilesize'];
+								return _.getTasksArray(sizeData, undefined, 'preview-').then(function(previewTasks) {
+									// remove any tasks currently in the tasks.json file
+									delete tasks['master'];
+									delete tasks['resize'];
+									delete tasks['vendor'];
+									delete tasks['handoff'];
+									delete tasks['checkfilesize'];
+									delete tasks['preview'];
 
-								// Add generated task names to the tasks.json file
-								tasks.master = masterData;
-								tasks.resize = sizeData;
-								tasks.vendor = vendor;
-								tasks.handoff = handoff;
-								tasks.checkfilesize = checkfilesize;
-								fs.writeFile(tasksPath, JSON.stringify(tasks), (err) => {
-									if (err) throw err;
-								});
+									// Add generated task names to the tasks.json file
+									tasks.master = masterData;
+									tasks.resize = sizeData;
+									tasks.vendor = vendor;
+									tasks.handoff = handoff;
+									tasks.checkfilesize = checkfilesize;
+									tasks.preview = previewTasks;
 
+									fs.writeFile(tasksPath, JSON.stringify(tasks), (err) => {
+										if (err) throw err;
+									});
+								}).catch(function(e) { console.log(e); });
 							}).catch(function(e) { console.log(e); });
 						}).catch(function(e) { console.log(e); });
 					}).catch(function(e) { console.log(e); });
@@ -328,17 +359,6 @@ gulp.task('index-master', function() {
 // END GENERATE INDEX–MASTER FILE
 
 
-gulp.task('default', ['build-strategist'], function() {
-	return registerMasterTasks().then(function() {
-		return runSequence(
-			'index-master',
-			['get-js-files', 'image-min'],
-			tasks.master,
-			'watch');
-	});
-});
-
-
 // START GENERATE INDEX–RESIZE FILE
 gulp.task('index-resize', function() {
 	return gulp.src("./.strategist/index.lodash")
@@ -363,6 +383,17 @@ gulp.task('index-resize', function() {
 // END GENERATE INDEX–RESIZE FILE
 
 
+gulp.task('default', ['build-strategist'], function() {
+	return registerMasterTasks().then(function() {
+		return runSequence(
+			'index-master',
+			['get-js-files', 'image-min'],
+			tasks.master,
+			'watch');
+	});
+});
+
+
 gulp.task('resize', ['get-js-files'], function() {
 	return registerResizeTasks().then(function() {
 		return runSequence(
@@ -372,8 +403,37 @@ gulp.task('resize', ['get-js-files'], function() {
 	});
 });
 
-// Generate Client Preview
-gulp.task("preview", function() {
+
+gulp.task('vendor', function() {
+	registerVendorTasks().then(function() {
+		return runSequence(tasks.vendor);
+	});
+});
+
+
+// COPIES STATIC BANNERS INTO HANDOFF FOLDER
+gulp.task('copy-static', function() {
+	return gulp.src('./assets/static-banners/*')
+		.pipe(gulp.dest('./.strategist/temp/handoff/static-backups/'));
+});
+
+
+gulp.task('handoff', ['vendor', 'copy-static'], function() {
+	registerHandoffTasks().then(function() {
+		return _.runTasks(tasks.handoff).then(function() {
+			return gulp.src('./.strategist/temp/handoff/**')
+				.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
+				.pipe(gulp.dest('./'))
+				.on('end', function() {
+					return runSequence('clean-temp');
+				});
+		});
+	});
+});
+
+
+// START PREVIEW TASK
+gulp.task('preview', function() {
 	return _.copyDir('./.strategist/preview', './preview').then(function() {
 		return _.copyDir('./banners/', './preview/banners').then(function() {
 			return _.copyDir('./assets/', './preview/assets').then(function() {
@@ -395,12 +455,19 @@ gulp.task("preview", function() {
 							staticOnly: false
 						}))
 						.pipe(plugins.rename("index.html"))
-						.pipe(gulp.dest("./preview"));
+						.pipe(gulp.dest("./preview"))
+						.on('end', function() {
+							registerPreviewTasks().then(function() {
+								return runSequence(tasks.preview);
+							});
+						});
 				});
 			});
 		});
 	});
 });
+// END PREVIEW TASK
+
 
 // START GENERATE STATIC-ONLY CLIENT PREVIEW
 gulp.task("preview-static", function() {
@@ -429,35 +496,15 @@ gulp.task("preview-static", function() {
 });
 // START GENERATE STATIC-ONLY CLIENT PREVIEW
 
-gulp.task('vendor', function() {
-	registerVendorTasks().then(function() {
-		return runSequence(tasks.vendor);
-	});
-});
 
-// COPIES STATIC BANNERS INTO HANDOFF FOLDER
-gulp.task('copy-static', function() {
-	return gulp.src('./assets/static-banners/*')
-		.pipe(gulp.dest('./.strategist/temp/handoff/static-backups/'));
-});
-
-gulp.task('handoff', ['vendor', 'copy-static'], function() {
-	registerHandoffTasks().then(function() {
-		return _.runTasks(tasks.handoff).then(function() {
-			return gulp.src('./.strategist/temp/handoff/**')
-				.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
-				.pipe(gulp.dest('./'))
-				.on('end', function() {
-					return runSequence('clean-temp');
-				});
-		});
-	});
-});
-
+// START CLEAN TEMP DIR
 gulp.task('clean-temp', function() {
 	return del(".strategist/temp/**");
 });
+// END CLEAN TEMP DIR
 
+
+// START WATCH TASK
 gulp.task('watch', function() {
 
 	// Serve files from this project's virtual host that has been configured with the server rendering this site
@@ -475,9 +522,10 @@ gulp.task('watch', function() {
 	gulp.watch( './.strategist/preview/preview-assets/sass/**', ['sass'] );
 	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
 });
+// END WATCH TASK
 
 
-
+// START CHECK FILE SIZE TASK
 gulp.task('check-file-size', function() {
 	registerCheckfilesizeTasks().then(function() {
 		return runSequence(tasks.checkfilesize, 'clean-temp');
@@ -485,10 +533,11 @@ gulp.task('check-file-size', function() {
 });
 gulp.task('size', ['check-file-size']);
 gulp.task('check-size', ['check-file-size']);
+// END CHECK FILE SIZE TASK
 
 
 
-// STYLE DEVELOPMENT TASK
+// START STYLE DEVELOPMENT TASK
 gulp.task('sass', function() {
 	return _.isGenerated('./preview', 'index.html').then(function(generated) {
 		console.log(generated);
@@ -525,3 +574,4 @@ gulp.task('sass', function() {
 		}
 	});
 });
+// END STYLE DEVELOPMENT TASK
