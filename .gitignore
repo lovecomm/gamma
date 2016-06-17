@@ -5,4 +5,4 @@ _creative
 ./preview
 *.zip
 *.sass-cache
-assets/scripts/*
+temp

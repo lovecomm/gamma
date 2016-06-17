@@ -142,7 +142,7 @@ function registerResizeTasks() {
 						.pipe(plugins.replace('height=' + config.sizes[0].height, 'height=' + height))
 						.pipe(plugins.replace(config.sizes[0].width + 'px', width + 'px'))
 						.pipe(plugins.replace(config.sizes[0].height + 'px', height + 'px'))
-						.pipe(plugins.replace('var w = ' + config.sizes[0].width, 'var h = ' + width))
+						.pipe(plugins.replace('var w = ' + config.sizes[0].width, 'var w = ' + width))
 						.pipe(plugins.replace('var h = ' + config.sizes[0].height, 'var h = ' + height))
 						.pipe(plugins.rename('index.html'))
 						.pipe(gulp.dest(destination));
