@@ -5,6 +5,7 @@ let fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	colors = require('colors'),
 	config = require('./config/config.json'),
+	del = require('del'),
 	runSequence = require("run-sequence"),
 	inquirer = require('inquirer'),
 	sizeOptions = require('./config/options/sizes.json'),
@@ -13,23 +14,38 @@ let fs = require('fs-extra'),
 
 module.exports = {
 	isGenerated: function(dir, filename) {
-		return new Promise(function(resolve, reject) {
-			let generated;
-			fs.readdir(dir, function(err, files) {
-				if (err) {
-					generated = false;
-				} else {
-					for( let i = 0; i < files.length; i++ ) {
-						if( files[i] == filename ) {
-							generated = true;
-						} else {
-							generated = false;
+
+		if(filename) {
+			return new Promise(function(resolve, reject) {
+				let generated;
+				fs.readdir(dir, function(err, files) {
+					if (err) {
+						generated = false;
+					} else {
+						for( let i = 0; i < files.length; i++ ) {
+							if( files[i] == filename ) {
+								generated = true;
+							} else {
+								generated = false;
+							}
 						}
 					}
-				}
-				return resolve(generated);
+					return resolve(generated);
+				});
 			});
-		});
+		} else {
+			return new Promise(function(resolve, reject) {
+				let generated;
+				fs.stat(dir, function(err, stats) {
+					if (err) {
+						generated = false;
+					} else {
+						generated = true;
+					}
+					return resolve(generated);
+				});
+			});
+		}
 	},
 	buildUserConfig: function() {
 		let _ = this;
@@ -280,6 +296,18 @@ module.exports = {
 				}
 				resolve(true);
 			});
+		});
+	},
+	removeResized: function() {
+		return new Promise(function(resolve, reject) {
+			config.concepts.forEach(function(concept) {
+				config.sizes.forEach(function(size) {
+					if(size.name !== config.sizes[0].name) {
+						del('./banners/' + concept + '/' + size.name);
+					}
+				});
+			});
+			resolve(true);
 		});
 	}
 };

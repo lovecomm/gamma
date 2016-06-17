@@ -8,6 +8,7 @@ let gulp = require('gulp'),
 	colors = require('colors'),
 	del = require('del'),
 	runSequence = require("run-sequence"),
+	inquirer = require('inquirer'),
 	browserSync	= require('browser-sync').create(),
 	tasksPath = './.strategist/tasks.json',
 	tasks = require('./.strategist/tasks.json'),
@@ -24,10 +25,10 @@ gulp.task('clean', function() {
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
-			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. Files within the banners dir.\n2. The preview dirs.\n3. The handoff dir. and .zip\n4. The generated config.\n5. The generated task arrays.\n6. The generated root index.html file.\n')
+			message: colors.red('\nAre you sure you want to clean your project? This includes removing the following:\n1. The banners dir.\n2. The preview dirs.\n3. The handoff dir. and .zip\n4. The generated config.\n5. The generated task arrays.\n6. The generated root index.html file.\n')
 		}, function(res) {
 			if(res.clean === true) {
-				del('./banners/*');
+				del('./banners');
 				del('./preview');
 				del('./preview-static');
 				del('./' + config.client + '-handoff');
@@ -294,35 +295,39 @@ function registerCheckfilesizeTasks() {
 
 
 // START GENERATE CONFIG AND TASK ARRAYS
-gulp.task('build-strategist', function() {
-	return _.buildUserConfig().then(function(generatedConfig) {
-		config = generatedConfig;
-		return _.getTasksArray(config.concepts, undefined, 'master-').then(function(masterData) {
-			return _.getTasksArray(config.concepts, config.sizes, '-').then(function(sizeData) {
-				return _.getTasksArray(config.vendors, config.concepts, '_').then(function(vendorConceptsData) {
-					return _.getTasksArray(vendorConceptsData, config.sizes, '@').then(function(vendor) {
-						return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
-							return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
-								return _.getTasksArray(sizeData, undefined, 'preview-').then(function(previewTasks) {
-									// remove any tasks currently in the tasks.json file
-									delete tasks['master'];
-									delete tasks['resize'];
-									delete tasks['vendor'];
-									delete tasks['handoff'];
-									delete tasks['checkfilesize'];
-									delete tasks['preview'];
+function initialize() {
+	return new Promise(function(resolve, reject) {
+		return _.buildUserConfig().then(function(generatedConfig) {
+			config = generatedConfig;
+			return _.getTasksArray(config.concepts, undefined, 'master-').then(function(masterData) {
+				return _.getTasksArray(config.concepts, config.sizes, '-').then(function(sizeData) {
+					return _.getTasksArray(config.vendors, config.concepts, '_').then(function(vendorConceptsData) {
+						return _.getTasksArray(vendorConceptsData, config.sizes, '@').then(function(vendor) {
+							return _.getTasksArray(vendor, undefined, 'handoff-').then(function(handoff) {
+								return _.getTasksArray(sizeData, undefined, '$').then(function(checkfilesize) {
+									return _.getTasksArray(sizeData, undefined, 'preview-').then(function(previewTasks) {
+										// remove any tasks currently in the tasks.json file
+										delete tasks['master'];
+										delete tasks['resize'];
+										delete tasks['vendor'];
+										delete tasks['handoff'];
+										delete tasks['checkfilesize'];
+										delete tasks['preview'];
 
-									// Add generated task names to the tasks.json file
-									tasks.master = masterData;
-									tasks.resize = sizeData;
-									tasks.vendor = vendor;
-									tasks.handoff = handoff;
-									tasks.checkfilesize = checkfilesize;
-									tasks.preview = previewTasks;
+										// Add generated task names to the tasks.json file
+										tasks.master = masterData;
+										tasks.resize = sizeData;
+										tasks.vendor = vendor;
+										tasks.handoff = handoff;
+										tasks.checkfilesize = checkfilesize;
+										tasks.preview = previewTasks;
 
-									fs.writeFile(tasksPath, JSON.stringify(tasks), (err) => {
-										if (err) throw err;
-									});
+										fs.writeFile(tasksPath, JSON.stringify(tasks), (err) => {
+											if (err) throw err;
+										});
+
+										resolve(true);
+									}).catch(function(e) { console.log(e); });
 								}).catch(function(e) { console.log(e); });
 							}).catch(function(e) { console.log(e); });
 						}).catch(function(e) { console.log(e); });
@@ -330,8 +335,8 @@ gulp.task('build-strategist', function() {
 				}).catch(function(e) { console.log(e); });
 			}).catch(function(e) { console.log(e); });
 		}).catch(function(e) { console.log(e); });
-	}).catch(function(e) { console.log(e); });
-});
+	});
+}
 // END GENERATE CONFIG AND TASK ARRAYS
 
 
@@ -383,24 +388,68 @@ gulp.task('index-resize', function() {
 // END GENERATE INDEX–RESIZE FILE
 
 
-gulp.task('default', ['build-strategist'], function() {
-	return registerMasterTasks().then(function() {
-		return runSequence(
-			'index-master',
-			['get-js-files', 'image-min'],
-			tasks.master,
-			'watch');
-	});
+gulp.task('default', function() {
+	function runDefault() {
+		initialize().then(function() {
+			return registerMasterTasks().then(function() {
+				return runSequence(
+					'index-master',
+					['get-js-files', 'image-min'],
+					tasks.master,
+					'watch');
+			});
+		});
+	}
+	return _.isGenerated('./banners/').then(function(generated) {
+		if(!generated) {
+			runDefault();
+		} else {
+			inquirer.prompt([
+				{
+					type: 'confirm',
+					message: plugins.util.colors.red('You\'ve already initialized your project!') + '\nWould you like to re-initialize it?',
+					name: 'continue'
+				}
+			]).then(function(answers) {
+				if(answers.continue === true) {
+					return runSequence('clean', function() {
+						runDefault();
+					});
+				}
+			});
+		}
+	}).catch(function(e) { console.log(e); });
 });
 
 
 gulp.task('resize', ['get-js-files'], function() {
-	return registerResizeTasks().then(function() {
-		return runSequence(
-			'index-resize',
-			tasks.resize,
-			'watch');
-	});
+	function runResize() {
+		return registerResizeTasks().then(function() {
+			return runSequence(
+				'index-resize',
+				tasks.resize,
+				'watch');
+		});
+	}
+	return _.isGenerated('./banners/' + config.concepts[0] + '/' + config.sizes[1].name + '/', 'index.html').then(function(generated) {
+		if(!generated) {
+			runResize();
+		} else {
+			inquirer.prompt([
+				{
+					type: 'confirm',
+					message: plugins.util.colors.red('You\'ve already resized your banners!') + '\nWould you\'d like to overwrite the existing resizes?' + plugins.util.colors.red('\nWarning! This will overwrite all banners except the first size of each concept\n'),
+					name: 'continue'
+				}
+			]).then(function(answers) {
+				if(answers.continue === true) {
+					return _.removeResized().then(function() {
+						runResize();
+					});
+				}
+			});
+		}
+	}).catch(function(e) { console.log(e); });
 });
 
 
