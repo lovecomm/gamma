@@ -23,6 +23,7 @@ Gamma is a CLI application to make generating HTML5 banners simple. It's built w
 4. Right now this project by default is set up to use GSAP's greensock animation library (CDN)(Which is allowed for both DoubleClick and Adwords vendors. You can remove this from within your `./.gamma/banner.lodash` template file). To add other JS libraries, simply add the files to the `assets/scripts` directory.
 #### Gulp Default
 5. Run `gulp` or `gulp default` and answer the questions to generate the config for your project. This is where you will input the client associated with the project, each of the banner concepts and sizes and vendors, as well as the max file size for the HTML5 banners. When it comes to the naming the project client and concepts, be sure to use the exact same spellings for this process, the images, and the static backups. If you need different/additional vendors or sizes, add them to the `sizes.json` and `vendors.json` files before running `gulp default` or `gulp`. You can find these in `.gamma/config/*.json`.
+
 #### Animation
 6. Animate the first size of each of your concepts.
 7. Run `gulp resize`. This takes everything you've done for the first size of each concept and copies it to the rest of the sizes you selected during the `gulp default` task. Keep in mind that during this task all instances of the height and width in the original size, will be replaced with the new height and width for each size.
