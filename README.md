@@ -14,32 +14,21 @@ Gamma is a CLI application to make generating HTML5 banners simple. It's built w
 		`client-concept-bannerWidthxbannerHeight.fileExtension`
 
 		**`Example: google-fiber-300x600.jpg`**
-3. Put all of your image slices in the **assets/images/** directory.
-
-		*While file extension doesn't matter, the Client and Concept names cannot start with numbers. They need to be CSS-ID safe and JS variable save. Also, You **MUST** name your image slices in the following format:*
+3. Put all of your image slices in the **assets/images/** directory. While file extension doesn't matter, the Client and Concept names cannot start with numbers. They need to be CSS-ID safe and JS variable save. Also, You **MUST** name your image slices in the following format:
 
 	`concept-bannerWidthxbannerHeight-layerName.fileExtension`
 
 	**`Example: fiber-300x600-logo.png`**
 #### Javscript libraries
-4. Right now this project by default is set up to use GSAP's greensock animation library (CDN)(Which is allowed for both DoubleClick and Adwords vendors. You can remove this from within your `./.gamma/banner.lodash` template file.).
-
-		To add other JS libraries, simply add the files to the `assets/scripts` directory.
+4. Right now this project by default is set up to use GSAP's greensock animation library (CDN)(Which is allowed for both DoubleClick and Adwords vendors. You can remove this from within your `./.gamma/banner.lodash` template file). To add other JS libraries, simply add the files to the `assets/scripts` directory.
 #### Gulp Default
-5. Run `gulp` or `gulp default` and answer the questions to generate the config for your project. This is where you will input the client associated with the project, each of the banner concepts and sizes and vendors, as well as the max file size for the HTML5 banners.
-
-		*When it comes to the naming the project client and concepts, be sure to use the exact same spellings for this process, the images, and the static backups.*
-
-		*If you need different/additional vendors or sizes, add them to the `sizes.json` and `vendors.json` files before running `gulp default` or `gulp`. You can find these in `.gamma/config/*.json`*
-
+5. Run `gulp` or `gulp default` and answer the questions to generate the config for your project. This is where you will input the client associated with the project, each of the banner concepts and sizes and vendors, as well as the max file size for the HTML5 banners. When it comes to the naming the project client and concepts, be sure to use the exact same spellings for this process, the images, and the static backups. If you need different/additional vendors or sizes, add them to the `sizes.json` and `vendors.json` files before running `gulp default` or `gulp`. You can find these in `.gamma/config/*.json`
 #### Animation
 6. Animate the first size of each of your concepts.
 7. Run `gulp resize`. This takes everything you've done for the first size of each concept and copies it to the rest of the sizes you selected during the `gulp default` task. Keep in mind that during this task all instances of the height and width in the original size, will be replaced with the new height and width for each size.
 8. Update your animations for each of the new sizes.
-
 #### Preview
 9. Run `gulp preview` to generate the preview. This generates a preview folder at the root directory of your Gamma project. Simply copy this folder to whatever server you'd like it to be reviewed on. It's index.html contains links for each of the static and  HTML5 banners. The links will open in a lightbox.
-
 #### Handoff
 10. Ready to send to your Vendor/Network? AWESOME! Go ahead and run `gulp handoff`. This copies all of the banners you've animated already into `.gamma/temp/`, then updates each of the banners to match the link and script dependencies for each vendor you put in **config.json**. A zipped handoff is generated and put in the root dir of this project.
 
