@@ -1,37 +1,34 @@
 <!DOCTYPE html>
 <html>
-
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Gamma : Infuse your HTML5 banners with adrenaline.">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
 
-    <title>Gamma</title>
+    <title>Gamma by lovecomm</title>
   </head>
 
   <body>
+    <header>
+      <div class="inner">
+        <h1>Gamma</h1>
+        <h2>Infuse your HTML5 banners with adrenaline.</h2>
+        <a href="https://github.com/lovecomm/gamma" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/lovecomm/gamma">View on GitHub</a>
-
-          <h1 id="project_title">Gamma</h1>
-          <h2 id="project_tagline">Infuse your HTML5 banners with adrenaline.</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/lovecomm/gamma/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/lovecomm/gamma/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <p>Gamma is a CLI application to make generating HTML5 banners simple. It's built with Node &amp; Gulp. Some of the things it does includes:</p>
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <p>Gamma is a CLI application to make generating HTML5 banners simple. It's built with Node &amp; Gulp. Some of the things it does includes:</p>
 
 <ul>
 <li>Inline all of your DOM elements and JS vars based upon the images and scripts you have within the <strong>assets/</strong> folder.</li>
@@ -44,45 +41,67 @@
 <a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting Started</h2>
 
 <ol>
-<li>Run <code>npm install</code> in your Terminal
-#### Static backups &amp; Image slices</li>
+<li>Run <code>npm install</code> in your Terminal</li>
 <li>
-<p>Put all of your static failovers/backups in the <strong>assets/static-banners/</strong> directory. You <strong>MUST</strong> name your image files in the following format (File extension doesn't matter):</p>
+<strong>Setting up your failover (static) banners</strong>
 
-<pre><code>`client-concept-bannerWidthxbannerHeight.fileExtension`
-
-**`Example: google-fiber-300x600.jpg`**
-</code></pre>
+<ol>
+<li>Name your failover (static) banners in the following format (File extension doesn't matter): <strong>client-concept-bannerWidthxbannerHeight.fileExtension</strong>. Example: <strong>google-fiber-300x600.jpg</strong>
+</li>
+<li>Put all of your failover (static) banners in the <strong>assets/static-banners/</strong> directory.</li>
+</ol>
 </li>
 <li>
-<p>Put all of your image slices in the <strong>assets/images/</strong> directory. While file extension doesn't matter, the Client and Concept names cannot start with numbers. They need to be CSS-ID safe and JS variable save. Also, You <strong>MUST</strong> name your image slices in the following format:</p>
+<strong>Setting up your image slices for the HTML5 banners</strong>
 
-<p><code>concept-bannerWidthxbannerHeight-layerName.fileExtension</code></p>
-
-<p><strong><code>Example: fiber-300x600-logo.png</code></strong></p>
-
-<h4>
-<a id="javscript-libraries" class="anchor" href="#javscript-libraries" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Javscript libraries</h4>
+<ol>
+<li>Name your image slices in the following format (While file extension doesn't matter, the Client and Concept names cannot start with numbers. They need to be CSS-ID safe and JS variable safe): <strong>concept-bannerWidthxbannerHeight-layerName.fileExtension</strong>. Example: <strong>Example: fiber-300x600-logo.png</strong>
 </li>
-<li>Right now this project by default is set up to use GSAP's greensock animation library (CDN)(Which is allowed for both DoubleClick and Adwords vendors. You can remove this from within your <code>./.gamma/banner.lodash</code> template file). To add other JS libraries, simply add the files to the <code>assets/scripts</code> directory.
-#### Gulp Default</li>
-<li>Run <code>gulp</code> or <code>gulp default</code> and answer the questions to generate the config for your project. This is where you will input the client associated with the project, each of the banner concepts and sizes and vendors, as well as the max file size for the HTML5 banners. When it comes to the naming the project client and concepts, be sure to use the exact same spellings for this process, the images, and the static backups. If you need different/additional vendors or sizes, add them to the <code>sizes.json</code> and <code>vendors.json</code> files before running <code>gulp default</code> or <code>gulp</code>. You can find these in <code>.gamma/config/*.json</code>
-#### Animation</li>
+<li>Put all of your image slices in the <strong>assets/images/</strong> directory.</li>
+</ol>
+</li>
+<li>
+<strong>Javscript libraries</strong>
+
+<ol>
+<li>Right now this project by default is set up to use GSAP's greensock animation library (CDN)(Which is allowed for both DoubleClick and Adwords vendors. You can remove this from within your <code>./.gamma/banner.lodash</code> template file). To add other JS libraries, simply add the files to the <code>assets/scripts</code> directory.</li>
+</ol>
+</li>
+<li>
+<strong>Gulp Default</strong>
+
+<ol>
+<li>Run <code>gulp</code> or <code>gulp default</code> and answer the questions to generate the config for your project.</li>
+<li>This is where you will input the client associated with the project, each of the banner concepts and sizes and vendors, as well as the max file size for the HTML5 banners.</li>
+<li>When it comes to the naming the project client and concepts, be sure to use the exact same spellings for this process, the images, and the static backups.</li>
+<li>If you need different/additional vendors or sizes, add them to the <code>sizes.json</code> and <code>vendors.json</code> files before running <code>gulp default</code> or <code>gulp</code>. You can find these in <code>.gamma/config/*.json</code>.</li>
+</ol>
+</li>
+<li>
+<strong>Animation</strong>
+
+<ol>
 <li>Animate the first size of each of your concepts.</li>
 <li>Run <code>gulp resize</code>. This takes everything you've done for the first size of each concept and copies it to the rest of the sizes you selected during the <code>gulp default</code> task. Keep in mind that during this task all instances of the height and width in the original size, will be replaced with the new height and width for each size.</li>
-<li>Update your animations for each of the new sizes.
-#### Preview</li>
-<li>Run <code>gulp preview</code> to generate the preview. This generates a preview folder at the root directory of your Gamma project. Simply copy this folder to whatever server you'd like it to be reviewed on. It's index.html contains links for each of the static and  HTML5 banners. The links will open in a lightbox.
-#### Handoff</li>
-<li>Ready to send to your Vendor/Network? AWESOME! Go ahead and run <code>gulp handoff</code>. This copies all of the banners you've animated already into <code>.gamma/temp/</code>, then updates each of the banners to match the link and script dependencies for each vendor you put in <strong>config.json</strong>. A zipped handoff is generated and put in the root dir of this project.</li>
+<li>Update your animations for each of the new sizes.</li>
 </ol>
+</li>
+<li>
+<strong>Preview</strong>
 
-<h2>
-<a id="preview-static-only" class="anchor" href="#preview-static-only" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Preview-Static Only</h2>
+<ol>
+<li>Run <code>gulp preview</code> to generate the preview. This generates a preview folder at the root directory of your Gamma project. Simply copy this folder to whatever server you'd like it to be reviewed on. It's index.html contains links for each of the static and  HTML5 banners. The links will open in a lightbox.</li>
+<li>At times it may be useful to have a preview with just the static banners. To generate a static/failover-only preview, run <code>gulp preview-static</code>. Before running this, be sure that your static banners are in the <code>assets/static-banners</code> directory.</li>
+</ol>
+</li>
+<li>
+<strong>Handoff</strong>
 
-<ul>
-<li>Run <code>gulp preview-static</code> to generate a preview for only your static/failover banners. This is useful when you want make sure failover versions are signed–off before proceeding with animation. Before running this, be sure that your static banners are in the <code>assets/static-banners</code> directory.</li>
-</ul>
+<ol>
+<li>Once you're ready to send the packaged banners to your Vendor/Network, run <code>gulp handoff</code>. This copies all of the banners you've animated already into <code>.gamma/temp/</code>, then updates each of the banners to match the link and script dependencies for each vendor you put in <strong>config.json</strong>. A zipped handoff is generated and put in the root dir of this project.</li>
+</ol>
+</li>
+</ol>
 
 <h2>
 <a id="gulp-watch-live-reload" class="anchor" href="#gulp-watch-live-reload" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Gulp Watch (Live-Reload)</h2>
@@ -108,18 +127,25 @@
 <a id="checking-file-size" class="anchor" href="#checking-file-size" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Checking file size</h2>
 
 <p>The <code>gulp check-file-size</code> task automatically runs whenever a banner is saved and <code>gulp watch</code> is running. If you are over the max file size allotted for the banners, it will display a console warning with the size of banner (including html, js libs, and images–all compressed). For the best accuracy, this task copies HTML, JS, and image files associated with each banner, compresses them, and then checks the file size.</p>
-      </section>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/lovecomm/gamma/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/lovecomm/gamma/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/lovecomm/gamma"></a> is maintained by <a href="https://github.com/lovecomm">lovecomm</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
     </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Gamma maintained by <a href="https://github.com/lovecomm">lovecomm</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
+  
   </body>
 </html>
