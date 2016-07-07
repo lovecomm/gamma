@@ -1,7 +1,7 @@
 "use strict";
 
 let gulp = require('gulp'),
-	_ = require('./.strategist/helpers.js'),
+	_ = require('./.gamma/helpers.js'),
 	fs = require('fs-extra'),
 	plugins = require('gulp-load-plugins')(),
 	path = require("path"),
@@ -10,18 +10,18 @@ let gulp = require('gulp'),
 	runSequence = require("run-sequence"),
 	inquirer = require('inquirer'),
 	browserSync	= require('browser-sync').create(),
-	tasksPath = './.strategist/tasks.json',
-	tasks = require('./.strategist/tasks.json'),
+	tasksPath = './.gamma/tasks.json',
+	tasks = require('./.gamma/tasks.json'),
 	globalImgPath = '../../../assets/images/',
 	globalScriptsPath = '../../../assets/scripts/',
-	viewScript = '<script src="../../../.strategist/jquery.min.js"></script><script src="../../../.strategist/view.js"></script>',
+	viewScript = '<script src="../../../.gamma/jquery.min.js"></script><script src="../../../.gamma/view.js"></script>',
 	jsDependencies = [],
-	config = require('./.strategist/config/config.json');
+	config = require('./.gamma/config/config.json');
 
 
 // START CLEANING TASK
 gulp.task('clean', function() {
-	return gulp.src('./.strategist/banner.lodash')
+	return gulp.src('./.gamma/banner.lodash')
 		.pipe(plugins.prompt.prompt({
 			type: 'confirm',
 			name: 'clean',
@@ -36,11 +36,11 @@ gulp.task('clean', function() {
 				del('./index.html');
 				let emptyObject = {};
 
-				fs.writeFile('.strategist/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+				fs.writeFile('.gamma/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 
-				fs.writeFile('.strategist/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+				fs.writeFile('.gamma/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 			}
@@ -83,7 +83,7 @@ function registerMasterTasks() {
 
 			_.getImages(concept, config.sizes[0].name,  './banners/' + concept + config.sizes[0].name, false).then(function(imgArray) {
 				gulp.task(masterconcept, function() {
-				 	return gulp.src('./.strategist/banner.lodash')
+					 return gulp.src('./.gamma/banner.lodash')
 						.pipe(plugins.plumber(function(error) {
 								plugins.util.log(
 									plugins.util.colors.red(error.message),
@@ -168,7 +168,7 @@ function registerVendorTasks() {
 				concept = vendorConceptSize.match(/.*_(.*)@/)[1],
 				size = vendorConceptSize.match(/.*@(.*)/)[1],
 				target = './banners/' + concept + '/' + size,
-				destination = './.strategist/temp/vendor/' + vendor + '/' + concept + '-' + size,
+				destination = './.gamma/temp/vendor/' + vendor + '/' + concept + '-' + size,
 				scriptHeader,
 				scriptFooter,
 				link;
@@ -221,8 +221,8 @@ function registerHandoffTasks() {
 					concept = handoffVendorConceptSize.match(/_(.*)@/)[1],
 					size = handoffVendorConceptSize.match(/@(.*)/)[1],
 					bannerName = concept + '-' + size,
-					target = './.strategist/temp/vendor/' + vendor + '/' + bannerName + '/*',
-					destination = './.strategist/temp/handoff/';
+					target = './.gamma/temp/vendor/' + vendor + '/' + bannerName + '/*',
+					destination = './.gamma/temp/handoff/';
 
 				return _.zipDirs(target, destination, './' + vendor + '/' + bannerName + '.zip');
 			});
@@ -268,8 +268,8 @@ function registerCheckfilesizeTasks() {
 				size = conceptSizeCheck.match(/\$.*-(.*)/)[1],
 				bannerName = concept + '-' + size,
 				bannerPath = './banners/' + concept + '/' + size,
-				tempPath = './.strategist/temp/checkfilesize/' + concept + '/' + size + '/',
-				zipPath = './.strategist/temp/zipcheck/';
+				tempPath = './.gamma/temp/checkfilesize/' + concept + '/' + size + '/',
+				zipPath = './.gamma/temp/zipcheck/';
 
 			gulp.task(conceptSizeCheck, function() {
 
@@ -342,7 +342,7 @@ function initialize() {
 
 // START GENERATE INDEX–MASTER FILE
 gulp.task('index-master', function() {
-	return gulp.src("./.strategist/index.lodash")
+	return gulp.src("./.gamma/index.lodash")
 		.pipe(plugins.plumber(function(error) {
 				plugins.util.log(
 					plugins.util.colors.red(error.message),
@@ -366,7 +366,7 @@ gulp.task('index-master', function() {
 
 // START GENERATE INDEX–RESIZE FILE
 gulp.task('index-resize', function() {
-	return gulp.src("./.strategist/index.lodash")
+	return gulp.src("./.gamma/index.lodash")
 		.pipe(plugins.plumber(function(error) {
 				plugins.util.log(
 					plugins.util.colors.red(error.message),
@@ -463,14 +463,14 @@ gulp.task('vendor', function() {
 // COPIES STATIC BANNERS INTO HANDOFF FOLDER
 gulp.task('copy-static', function() {
 	return gulp.src('./assets/static-banners/*')
-		.pipe(gulp.dest('./.strategist/temp/handoff/static-backups/'));
+		.pipe(gulp.dest('./.gamma/temp/handoff/static-backups/'));
 });
 
 
 gulp.task('handoff', ['vendor', 'copy-static'], function() {
 	registerHandoffTasks().then(function() {
 		return _.runTasks(tasks.handoff).then(function() {
-			return gulp.src('./.strategist/temp/handoff/**')
+			return gulp.src('./.gamma/temp/handoff/**')
 				.pipe(plugins.zip(config.client + '-' + 'handoff.zip'))
 				.pipe(gulp.dest('./'))
 				.on('end', function() {
@@ -483,11 +483,11 @@ gulp.task('handoff', ['vendor', 'copy-static'], function() {
 
 // START PREVIEW TASK
 gulp.task('preview', function() {
-	return _.copyDir('./.strategist/preview', './preview').then(function() {
+	return _.copyDir('./.gamma/preview', './preview').then(function() {
 		return _.copyDir('./banners/', './preview/banners').then(function() {
 			return _.copyDir('./assets/', './preview/assets').then(function() {
 				return _.getFiles('./assets/static-banners', undefined).then(function(staticBannerFiles) {
-					return gulp.src("./.strategist/preview.lodash")
+					return gulp.src("./.gamma/preview.lodash")
 						.pipe(plugins.plumber(function(error) {
 								plugins.util.log(
 									plugins.util.colors.red(error.message),
@@ -520,10 +520,10 @@ gulp.task('preview', function() {
 
 // START GENERATE STATIC-ONLY CLIENT PREVIEW
 gulp.task("preview-static", function() {
-	return _.copyDir('./.strategist/preview', './preview-static').then(function() {
+	return _.copyDir('./.gamma/preview', './preview-static').then(function() {
 		return _.copyDir('./assets/', './preview-static/assets').then(function() {
 			return _.getFiles('./assets/static-banners', undefined).then(function(staticBannerFiles) {
-				return gulp.src("./.strategist/preview.lodash")
+				return gulp.src("./.gamma/preview.lodash")
 					.pipe(plugins.plumber(function(error) {
 							plugins.util.log(
 								plugins.util.colors.red(error.message),
@@ -548,7 +548,7 @@ gulp.task("preview-static", function() {
 
 // START CLEAN TEMP DIR
 gulp.task('clean-temp', function() {
-	return del(".strategist/temp/**");
+	return del(".gamma/temp/**");
 });
 // END CLEAN TEMP DIR
 
@@ -559,8 +559,8 @@ gulp.task('watch', function() {
 	// Serve files from this project's virtual host that has been configured with the server rendering this site
 	browserSync.init({
 		server: {
-        baseDir: './'
-    },
+				baseDir: './'
+		},
 		logPrefix: config.client + '-banners',
 		reloadOnRestart: true,
 		notify: true
@@ -568,7 +568,7 @@ gulp.task('watch', function() {
 
 	gulp.watch( ['./banners/**/**/index.html', './index.html', './preview/index.html'] ).on('change', browserSync.reload);
 	gulp.watch( './banners/**/**/index.html', ['check-file-size']);
-	gulp.watch( './.strategist/preview/preview-assets/sass/**', ['sass'] );
+	gulp.watch( './.gamma/preview/preview-assets/sass/**', ['sass'] );
 	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
 });
 // END WATCH TASK
@@ -591,7 +591,7 @@ gulp.task('sass', function() {
 	return _.isGenerated('./preview', 'index.html').then(function(generated) {
 		console.log(generated);
 		if(!generated) {
-			return gulp.src( './.strategist/preview/preview-assets/sass/custom.scss' )
+			return gulp.src( './.gamma/preview/preview-assets/sass/custom.scss' )
 				.pipe(plugins.plumber(function(error) {
 					plugins.util.log(
 						plugins.util.colors.red(error.message),
@@ -603,7 +603,7 @@ gulp.task('sass', function() {
 				.pipe(plugins.sass())
 				.pipe(plugins.cssnano())
 				.pipe(plugins.rename('app.min.css'))
-				.pipe(gulp.dest( './.strategist/preview/preview-assets/' ))
+				.pipe(gulp.dest( './.gamma/preview/preview-assets/' ))
 				.pipe(browserSync.stream());
 		} else {
 			return gulp.src( './preview/preview-assets/sass/custom.scss' )

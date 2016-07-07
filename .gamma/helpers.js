@@ -64,11 +64,11 @@ module.exports = {
 					name: 'client',
 					message: 'Client Name?',
 					validate: function (answer) {
-			      if (answer.length < 1) {
-			        return 'You must enter the Client Name';
-			      }
-			      return true;
-			    }
+						if (answer.length < 1) {
+							return 'You must enter the Client Name';
+						}
+						return true;
+					}
 				}, {
 					type: 'input',
 					name: 'maxFileSize',
@@ -116,9 +116,9 @@ module.exports = {
 							answers.vendors = vendors;
 							config = answers;
 
-							fs.writeFile('.strategist/config/config.json', JSON.stringify(config, null, '  '), (err) => {
+							fs.writeFile('.gamma/config/config.json', JSON.stringify(config, null, '  '), (err) => {
 								if (err) throw err;
-								console.log(colors.magenta(JSON.stringify(config, null, '  ')), colors.yellow('\n\nYour project config is listed above.\n\nIf this is inaccurate simply run `gulp clean` and then `gulp default` to regenerate it. Or, you can edit the file directly in `.strategist/config/config.json`.\n'));
+								console.log(colors.magenta(JSON.stringify(config, null, '  ')), colors.yellow('\n\nYour project config is listed above.\n\nIf this is inaccurate simply run `gulp clean` and then `gulp default` to regenerate it. Or, you can edit the file directly in `.gamma/config/config.json`.\n'));
 								resolve(config);
 							});
 						});
@@ -224,8 +224,8 @@ module.exports = {
 				// Allows us to only return an array of files with a certain file extension
 				if(ext) {
 					paths = files.filter(function(file) {
-	            return file.split('.').pop() == ext;
-	        });
+							return file.split('.').pop() == ext;
+					});
 				} else {
 					paths = files;
 				}
@@ -262,7 +262,7 @@ module.exports = {
 	copyDir: function(target, destination) {
 		return new Promise(function(resolve, reject) {
 			fs.copy(target, destination, function (err) {
-			  if (err) return reject(err)
+				if (err) return reject(err)
 				return resolve(true);
 			});
 		});
