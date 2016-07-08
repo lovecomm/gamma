@@ -4,7 +4,9 @@
 	<meta name="ad.size" content="width=<%= bannerWidth %>,height=<%= bannerHeight %>">
 	<meta charset="UTF-8">
 	<title>Banner</title>
-	<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->
+	<!-- GAMMA START: THIS SECTION IS REMOVED DURING HANDOFF GENERATION – LEAVE FOR NOW -->
+	<%= devHead %>
+	<!-- GAMMA END -->
 	<style>
 
 		body {
@@ -42,10 +44,14 @@
 </head>
 
 <body>
+	<!-- GAMMA START: THIS SECTION IS REMOVED DURING HANDOFF GENERATION – LEAVE FOR NOW -->
+	<%= devBody %>
+	<!-- GAMMA END -->
+
 	<a href="#DO_NOT_REMOVE:vendorLink" id="bannerLink">
 		<% _.each(imgDependencies, function(imgFile) { %> <img src="<%= imgPath + imgFile.fileName %>" id="<%= imgFile.layerName %>" alt="<%= imgFile.layerName %>">
 		<% }); %>
-  </a>
+	</a>
 
 <script>
 (function() {
@@ -58,6 +64,5 @@
 })();
 </script>
 	<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->
-<%= viewScript %>
 </body>
 </html>

@@ -14,9 +14,13 @@ let gulp = require('gulp'),
 	tasks = require('./.gamma/tasks.json'),
 	globalImgPath = '../../../assets/images/',
 	globalScriptsPath = '../../../assets/scripts/',
-	viewScript = '<script src="../../../.gamma/jquery.min.js"></script><script src="../../../.gamma/view.js"></script>',
+	devHead = '<link href="../../../.gamma/dev.css" rel="stylesheet" type="text/css">',
 	jsDependencies = [],
-	config = require('./.gamma/config/config.json');
+	config = require('./.gamma/config/config.json'),
+	currentSize = require('./.gamma/currentSize.json');
+
+// Get Dev body to display banner information during development
+
 
 
 // START CLEANING TASK
@@ -34,13 +38,18 @@ gulp.task('clean', function() {
 				del('./' + config.client + '-handoff');
 				del('./' + config.client + '-handoff.zip');
 				del('./index.html');
-				let emptyObject = {};
+				let emptyObject = {},
+				emptyArray = [];
 
 				fs.writeFile('.gamma/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 
 				fs.writeFile('.gamma/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+					if (err) throw err;
+				});
+
+				fs.writeFile('.gamma/currentSize.json', JSON.stringify(emptyArray, null, '  '), (err) => {
 					if (err) throw err;
 				});
 			}
@@ -99,7 +108,8 @@ function registerMasterTasks() {
 							scriptsPath: globalScriptsPath,
 							bannerWidth: config.sizes[0].width,
 							bannerHeight: config.sizes[0].height,
-							viewScript: viewScript
+							devBody: _.devBody(concept, undefined, config.sizes[0].width, config.sizes[0].height),
+							devHead: devHead
 						}))
 						.pipe(plugins.rename('index.html'))
 						.pipe(gulp.dest('./banners/' + concept + '/' + config.sizes[0].name));
@@ -167,6 +177,8 @@ function registerVendorTasks() {
 			let vendor = vendorConceptSize.match(/(.*)_/)[1],
 				concept = vendorConceptSize.match(/.*_(.*)@/)[1],
 				size = vendorConceptSize.match(/.*@(.*)/)[1],
+				width = size.match(/(.*)x/)[1],
+				height = size.match(/x(.*)/)[1],
 				target = './banners/' + concept + '/' + size,
 				destination = './.gamma/temp/vendor/' + vendor + '/' + concept + '-' + size,
 				scriptHeader,
@@ -185,24 +197,27 @@ function registerVendorTasks() {
 
 				gulp.task(vendorConceptSize, function() {
 					return _.copyDir(target, destination).then(function() {
+						return _.getCurrentFileSize(concept, size).then(function(currentFileSize) {
+							console.log(concept, currentFileSize, width, height);
+							return gulp.src(destination + '/index.html', {base: "./"})
+								.pipe(plugins.plumber(function(error) {
+										plugins.util.log(
+											plugins.util.colors.red(error.message),
+											plugins.util.colors.yellow('\r\nOn line: '+error.line),
+											plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+											);
+										this.emit('end');
+									}))
+								.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->', scriptHeader))
+								.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->', scriptFooter))
+								.pipe(plugins.replace('#DO_NOT_REMOVE:vendorLink', link))
 
-						return gulp.src(destination + '/index.html', {base: "./"})
-							.pipe(plugins.plumber(function(error) {
-									plugins.util.log(
-										plugins.util.colors.red(error.message),
-										plugins.util.colors.yellow('\r\nOn line: '+error.line),
-										plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-										);
-									this.emit('end');
-								}))
-							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->', scriptHeader))
-							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->', scriptFooter))
-							.pipe(plugins.replace('#DO_NOT_REMOVE:vendorLink', link))
-
-							.pipe(plugins.replace('../../../assets/images/', ''))
-							.pipe(plugins.replace('../../../assets/scripts/', ''))
-							.pipe(plugins.replace(viewScript, ''))
-							.pipe(gulp.dest("./"));
+								.pipe(plugins.replace('../../../assets/images/', ''))
+								.pipe(plugins.replace('../../../assets/scripts/', ''))
+								.pipe(plugins.replace(_.devBody(concept, currentFileSize, width, height), ''))
+								.pipe(plugins.replace(devHead, ''))
+								.pipe(gulp.dest("./"));
+						});
 					});
 				});
 			});
@@ -238,20 +253,24 @@ function registerPreviewTasks() {
 	return new Promise(function(resolve, reject) {
 		tasks.preview.forEach(function(conceptSizePreview) { //preview-CONCEPT-300x600
 			let concept = conceptSizePreview.match(/preview-(.*)-/)[1],
-				size = conceptSizePreview.match(/preview-.*-(.*)/)[1];
-
-			gulp.task(conceptSizePreview, function() {
-				return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
-				.pipe(plugins.plumber(function(error) {
-						plugins.util.log(
-							plugins.util.colors.red(error.message),
-							plugins.util.colors.yellow('\r\nOn line: '+error.line),
-							plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-							);
-						this.emit('end');
-					}))
-				.pipe(plugins.replace(viewScript, ''))
-				.pipe(gulp.dest('./'));
+				size = conceptSizePreview.match(/preview-.*-(.*)/)[1],
+				width = size.match(/(.*)x/)[1],
+				height = size.match(/x(.*)/)[1];
+			return _.getCurrentFileSize(concept, size).then(function(currentFileSize) {
+				console.log(concept, currentFileSize, width, height)
+				gulp.task(conceptSizePreview, function() {
+					return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
+						.pipe(plugins.plumber(function(error) {
+								plugins.util.log(
+									plugins.util.colors.red(error.message),
+									plugins.util.colors.yellow('\r\nOn line: '+error.line),
+									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+									);
+								this.emit('end');
+							}))
+						.pipe(plugins.replace(_.devBody(concept, currentFileSize, width, height), ''))
+						.pipe(gulp.dest('./'));
+				});
 			});
 		});
 		return resolve(true);
@@ -279,7 +298,16 @@ function registerCheckfilesizeTasks() {
 							return _.getImages(concept, size, tempPath, true).then(function() {
 								return _.copyDir('./assets/scripts', tempPath).then(function() {
 									return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
-										return _.checkFileSize(zipPath, bannerName + '.zip');
+										return _.checkFileSize(zipPath, bannerName + '.zip').then(function(data) {
+											let newSize;
+											data.currentSize > config.maxFileSize ?
+												newSize = '"currentFileSize" class="warning">' + data.currentSize + '</span>':
+												newSize = '"currentFileSize">' + data.currentSize + '</span>';
+											 return gulp.src(bannerPath + '/index.html', {base: './'} )
+												 .pipe(plugins.replace(/\"currentFileSize\".*<\/span>/g, newSize))
+												 .pipe(gulp.dest('./'))
+												 .pipe(browserSync.stream())
+										});
 									});
 								});
 							});
@@ -566,12 +594,15 @@ gulp.task('watch', function() {
 		notify: true
 	});
 
-	gulp.watch( ['./banners/**/**/index.html', './index.html', './preview/index.html'] ).on('change', browserSync.reload);
+	gulp.watch( ['./index.html', './preview/index.html'] ).on('change', browserSync.reload);
 	gulp.watch( './banners/**/**/index.html', ['check-file-size']);
 	gulp.watch( './.gamma/preview/preview-assets/sass/**', ['sass'] );
 	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
 });
 // END WATCH TASK
+
+
+// START INJECTING UPDATED INFO ABOUT BANNER
 
 
 // START CHECK FILE SIZE TASK
