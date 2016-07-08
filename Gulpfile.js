@@ -7,6 +7,7 @@ let gulp = require('gulp'),
 	path = require("path"),
 	colors = require('colors'),
 	del = require('del'),
+	rimraf = require('rimraf'),
 	runSequence = require("run-sequence"),
 	inquirer = require('inquirer'),
 	browserSync	= require('browser-sync').create(),
@@ -16,11 +17,7 @@ let gulp = require('gulp'),
 	globalScriptsPath = '../../../assets/scripts/',
 	devHead = '<link href="../../../.gamma/dev.css" rel="stylesheet" type="text/css">',
 	jsDependencies = [],
-	config = require('./.gamma/config/config.json'),
-	currentSize = require('./.gamma/currentSize.json');
-
-// Get Dev body to display banner information during development
-
+	config = require('./.gamma/config/config.json');
 
 
 // START CLEANING TASK
@@ -38,18 +35,14 @@ gulp.task('clean', function() {
 				del('./' + config.client + '-handoff');
 				del('./' + config.client + '-handoff.zip');
 				del('./index.html');
-				let emptyObject = {},
-				emptyArray = [];
+				del('.gamma/temp/**');
+				let emptyObject = {};
 
 				fs.writeFile('.gamma/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 
 				fs.writeFile('.gamma/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
-					if (err) throw err;
-				});
-
-				fs.writeFile('.gamma/currentSize.json', JSON.stringify(emptyArray, null, '  '), (err) => {
 					if (err) throw err;
 				});
 			}
@@ -197,27 +190,24 @@ function registerVendorTasks() {
 
 				gulp.task(vendorConceptSize, function() {
 					return _.copyDir(target, destination).then(function() {
-						return _.getCurrentFileSize(concept, size).then(function(currentFileSize) {
-							console.log(concept, currentFileSize, width, height);
-							return gulp.src(destination + '/index.html', {base: "./"})
-								.pipe(plugins.plumber(function(error) {
-										plugins.util.log(
-											plugins.util.colors.red(error.message),
-											plugins.util.colors.yellow('\r\nOn line: '+error.line),
-											plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-											);
-										this.emit('end');
-									}))
-								.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->', scriptHeader))
-								.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->', scriptFooter))
-								.pipe(plugins.replace('#DO_NOT_REMOVE:vendorLink', link))
+						return gulp.src(destination + '/index.html', {base: "./"})
+							.pipe(plugins.plumber(function(error) {
+									plugins.util.log(
+										plugins.util.colors.red(error.message),
+										plugins.util.colors.yellow('\r\nOn line: '+error.line),
+										plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+										);
+									this.emit('end');
+								}))
+							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptHeader -->', scriptHeader))
+							.pipe(plugins.replace('<!-- DO NOT REMOVE THIS COMMENT: vendorScriptFooter -->', scriptFooter))
+							.pipe(plugins.replace('#DO_NOT_REMOVE:vendorLink', link))
 
-								.pipe(plugins.replace('../../../assets/images/', ''))
-								.pipe(plugins.replace('../../../assets/scripts/', ''))
-								.pipe(plugins.replace(_.devBody(concept, currentFileSize, width, height), ''))
-								.pipe(plugins.replace(devHead, ''))
-								.pipe(gulp.dest("./"));
-						});
+							.pipe(plugins.replace('../../../assets/images/', ''))
+							.pipe(plugins.replace('../../../assets/scripts/', ''))
+							.pipe(plugins.replace(/<!-- GAMMA START[\s\S]*?GAMMA END -->/gmi, ' '))
+							.pipe(plugins.replace(devHead, ''))
+							.pipe(gulp.dest("./"));
 					});
 				});
 			});
@@ -256,21 +246,19 @@ function registerPreviewTasks() {
 				size = conceptSizePreview.match(/preview-.*-(.*)/)[1],
 				width = size.match(/(.*)x/)[1],
 				height = size.match(/x(.*)/)[1];
-			return _.getCurrentFileSize(concept, size).then(function(currentFileSize) {
 				console.log(concept, currentFileSize, width, height)
-				gulp.task(conceptSizePreview, function() {
-					return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
-						.pipe(plugins.plumber(function(error) {
-								plugins.util.log(
-									plugins.util.colors.red(error.message),
-									plugins.util.colors.yellow('\r\nOn line: '+error.line),
-									plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
-									);
-								this.emit('end');
-							}))
-						.pipe(plugins.replace(_.devBody(concept, currentFileSize, width, height), ''))
-						.pipe(gulp.dest('./'));
-				});
+			gulp.task(conceptSizePreview, function() {
+				return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
+					.pipe(plugins.plumber(function(error) {
+							plugins.util.log(
+								plugins.util.colors.red(error.message),
+								plugins.util.colors.yellow('\r\nOn line: '+error.line),
+								plugins.util.colors.yellow('\r\nCode Extract: '+error.extract)
+								);
+							this.emit('end');
+						}))
+					.pipe(plugins.replace(/<!-- GAMMA START[\s\S]*?GAMMA END -->/gmi, ' '))
+					.pipe(gulp.dest('./'));
 			});
 		});
 		return resolve(true);
@@ -575,8 +563,10 @@ gulp.task("preview-static", function() {
 
 
 // START CLEAN TEMP DIR
-gulp.task('clean-temp', function() {
-	return del(".gamma/temp/**");
+gulp.task('clean-temp', function(cb) {
+	// return gulp.src('.gamma/temp/**', { read: false })
+	// 	.pipe(plugins.rimraf({ force: true }));
+	rimraf('.gamma/temp/**', cb);
 });
 // END CLEAN TEMP DIR
 

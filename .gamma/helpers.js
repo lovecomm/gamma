@@ -10,8 +10,6 @@ let fs = require('fs-extra'),
 	inquirer = require('inquirer'),
 	sizeOptions = require('./config/options/sizes.json'),
 	vendorOptions = require('./config/options/vendors.json'),
-	currentSizePath = './.gamma/currentSize.json',
-	currentSize = require('./currentSize.json'),
 	currentFileSizeDefaultMessage = '<em>Save to get current file size in</em>',
 	camel = require('to-camel-case');
 
@@ -298,59 +296,8 @@ module.exports = {
 				if ( sizeInKb > config.maxFileSize ) {
 					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(config.maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
 				}
-				that.updateCurrentSizesData({bannerName: bannerName, currentSize: sizeInKb})
-					.then(function(data) {
-					resolve(data);
-				});
+				resolve({bannerName: bannerName, currentSize: sizeInKb});
 			});
-		});
-	},
-	updateCurrentSizesData: function(newBannerData) {
-		function containsBanner(currentBanner) {
-			for (let i = 0; i <= currentSize.length; i++) {
-				let item = currentSize[i];
-				if (item !== undefined && item.bannerName === currentBanner.bannerName) {
-					return true;
-				}
-			}
-			return false;
-		}
-		return new Promise(function(resolve, reject) {
-			if (currentSize.length === 0) { //checking to see if there are no banners in the currentsizes array
-				 newBannerData.oldSize = '0';
-				 currentSize.push(newBannerData);
-			} else {
-				if (containsBanner(newBannerData)) { //checking first to see if current banner exists in the current sizes array
-					for(let i = 0; i <= currentSize.length; i++) { //updating banner if already in array
-						let banner = currentSize[i];
-						if(banner !== undefined && banner.bannerName === newBannerData.bannerName) {
-							banner.oldSize = banner.currentSize;
-							banner.currentSize = newBannerData.currentSize;
-						}
-					}
-				} else { //adding current banner data if not already in array
-					newBannerData.oldSize = '0';
-					 currentSize.push(newBannerData);
-				}
-			}
-			fs.writeFile(currentSizePath, JSON.stringify(currentSize), (err) => {
-				if (err) console.warn(err);
-			});
-			resolve(newBannerData);
-		});
-	},
-	getCurrentFileSize: function(concept, size) {
-		return new Promise(function(resolve, reject) {
-			let thisBannerName = concept + '-' + size;
-			let thisBannerSize;
-			for( let i = 0; i <= currentSize.length; i++) {
-				let storedBanner = currentSize[i];
-				if(storedBanner && thisBannerName === storedBanner.bannerName) {
-					thisBannerSize = storedBanner.currentSize;
-					resolve(thisBannerSize);
-				}
-			}
-			resolve(currentFileSizeDefaultMessage);
 		});
 	},
 	removeResized: function() {

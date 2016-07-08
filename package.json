@@ -37,7 +37,10 @@
 		"gulp-util": "^3.0.6",
 		"gulp-zip": "^3.2.0",
 		"inquirer": "^1.0.3",
+		"install": "^0.8.1",
 		"lodash": "^3.10.1",
+		"npm": "^3.10.5",
+		"rimraf": "^2.5.3",
 		"run-sequence": "^1.1.5",
 		"to-camel-case": "^0.2.1"
 	}
