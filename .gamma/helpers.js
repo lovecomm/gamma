@@ -10,6 +10,9 @@ let fs = require('fs-extra'),
 	inquirer = require('inquirer'),
 	sizeOptions = require('./config/options/sizes.json'),
 	vendorOptions = require('./config/options/vendors.json'),
+	currentFileSizeDefaultMessage = '<em>Save to get current file size in</em>',
+	currentSizePath = './.gamma/currentSize.json',
+	currentSize = require('./currentSize.json'),
 	camel = require('to-camel-case');
 
 module.exports = {
@@ -286,16 +289,69 @@ module.exports = {
 		});
 	},
 	checkFileSize: function(path, file) {
+		const that = this;
 		return new Promise(function(resolve, reject) {
 			fs.stat(path + file, function(err, stat) {
 				if(err) console.log(err)
-				let sizeInKb = stat.size / 100,
+				let sizeInKb = stat.size / 1000.0,
 					bannerName = file.match(/(.*).zip/)[1];
 				if ( sizeInKb > config.maxFileSize ) {
 					console.log(colors.red('\n\tWARNING!!!') + ' Max file size allowed is ' + colors.green(config.maxFileSize + 'kb') + ', but ' + colors.yellow.underline(bannerName) + ' is ' + colors.red(sizeInKb  + 'kb') + '.\n');
 				}
-				resolve(true);
+				that.updateCurrentSizesData({bannerName: bannerName, currentSize: sizeInKb})
+					.then(function(data) {
+					resolve(data);
+				});
+				// resolve({bannerName: bannerName, currentSize: sizeInKb});
 			});
+		});
+	},
+	updateCurrentSizesData: function(newBannerData) {
+		function containsBanner(currentBanner) {
+			for (let i = 0; i <= currentSize.length; i++) {
+				let item = currentSize[i];
+				if (item !== undefined && item.bannerName === currentBanner.bannerName) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return new Promise(function(resolve, reject) {
+			if (currentSize.length === 0) { //checking to see if there are no banners in the currentsizes array
+				 newBannerData.oldSize = '0';
+				 currentSize.push(newBannerData);
+			} else {
+				if (containsBanner(newBannerData)) { //checking first to see if current banner exists in the current sizes array
+					for(let i = 0; i <= currentSize.length; i++) { //updating banner if already in array
+						let banner = currentSize[i];
+						if(banner !== undefined && banner.bannerName === newBannerData.bannerName) {
+							banner.oldSize = banner.currentSize;
+							banner.currentSize = newBannerData.currentSize;
+						}
+					}
+				} else { //adding current banner data if not already in array
+					newBannerData.oldSize = '0';
+					 currentSize.push(newBannerData);
+				}
+			}
+			fs.writeFile(currentSizePath, JSON.stringify(currentSize), (err) => {
+				if (err) console.warn(err);
+			});
+			resolve(newBannerData);
+		});
+	},
+	getCurrentFileSize: function(concept, size) {
+		return new Promise(function(resolve, reject) {
+			let thisBannerName = concept + '-' + size;
+			let thisBannerSize;
+			for( let i = 0; i <= currentSize.length; i++) {
+				let storedBanner = currentSize[i];
+				if(storedBanner && thisBannerName === storedBanner.bannerName) {
+					thisBannerSize = storedBanner.currentSize;
+					resolve(thisBannerSize);
+				}
+			}
+			resolve(currentFileSizeDefaultMessage);
 		});
 	},
 	removeResized: function() {
@@ -309,5 +365,19 @@ module.exports = {
 			});
 			resolve(true);
 		});
+	},
+	devBody: function (concept, currentSize, width, height) {
+		currentSize === undefined ? currentSize = currentFileSizeDefaultMessage : '';
+		return '<div id="gammaBar"><span>Powered by Gamma</span></div>'
+			+ '<ul id="info-panel">'
+			+ '<li>Client: <span id="projectClient">' + config.client + '</span></li>'
+			+ '<li>Concept: <span id="projectConcept">' + concept + '</span></li>'
+			+ '<li>Width: <span id="projectWidth">' + width + '</span>  px </li>'
+			+ '<li>Height: <span id="projectHeight">' + height + '</span>  px </li>'
+			+ '<li id="projectMaxFileSize">Max File Size: ' + config.maxFileSize + ' kb</li>'
+			+ '<li>Current File Size:  <span id="currentFileSize">' + currentSize + ' kb</span></li>'
+			+ '</ul>'
+			+ '<script src="../../../.gamma/jquery.js"></script>'
+			+ '<script src="../../../.gamma/updateSize.js"></script>';
 	}
 };
