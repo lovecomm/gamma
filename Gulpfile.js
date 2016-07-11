@@ -36,13 +36,18 @@ gulp.task('clean', function() {
 				del('./' + config.client + '-handoff.zip');
 				del('./index.html');
 				del('.gamma/temp/**');
-				let emptyObject = {};
+				let emptyObject = {},
+				emptyArray = [];
 
 				fs.writeFile('.gamma/config/config.json', JSON.stringify(emptyObject, null, '  '), (err) => {
 					if (err) throw err;
 				});
 
 				fs.writeFile('.gamma/tasks.json', JSON.stringify(emptyObject, null, '  '), (err) => {
+					if (err) throw err;
+				});
+
+				fs.writeFile('.gamma/currentSize.json', JSON.stringify(emptyArray, null, '  '), (err) => {
 					if (err) throw err;
 				});
 			}
@@ -241,12 +246,11 @@ function registerHandoffTasks() {
 // START GENERATE PREVIEW TASKS
 function registerPreviewTasks() {
 	return new Promise(function(resolve, reject) {
-		tasks.preview.forEach(function(conceptSizePreview) { //preview-CONCEPT-300x600
+		tasks.preview.forEach(function(conceptSizePreview) {
 			let concept = conceptSizePreview.match(/preview-(.*)-/)[1],
 				size = conceptSizePreview.match(/preview-.*-(.*)/)[1],
 				width = size.match(/(.*)x/)[1],
 				height = size.match(/x(.*)/)[1];
-				console.log(concept, currentFileSize, width, height)
 			gulp.task(conceptSizePreview, function() {
 				return gulp.src('./preview/banners/' + concept + '/' + size + '/index.html', {base: './'} )
 					.pipe(plugins.plumber(function(error) {
@@ -257,7 +261,7 @@ function registerPreviewTasks() {
 								);
 							this.emit('end');
 						}))
-					.pipe(plugins.replace(/<!-- GAMMA START[\s\S]*?GAMMA END -->/gmi, ' '))
+					.pipe(plugins.replace(/<!-- GAMMA START[\s\S]*?GAMMA END -->/gmi, ''))
 					.pipe(gulp.dest('./'));
 			});
 		});
@@ -286,16 +290,7 @@ function registerCheckfilesizeTasks() {
 							return _.getImages(concept, size, tempPath, true).then(function() {
 								return _.copyDir('./assets/scripts', tempPath).then(function() {
 									return _.zipDirs(tempPath + '*', zipPath, bannerName + '.zip').then(function() {
-										return _.checkFileSize(zipPath, bannerName + '.zip').then(function(data) {
-											let newSize;
-											data.currentSize > config.maxFileSize ?
-												newSize = '"currentFileSize" class="warning">' + data.currentSize + '</span>':
-												newSize = '"currentFileSize">' + data.currentSize + '</span>';
-											 return gulp.src(bannerPath + '/index.html', {base: './'} )
-												 .pipe(plugins.replace(/\"currentFileSize\".*<\/span>/g, newSize))
-												 .pipe(gulp.dest('./'))
-												 .pipe(browserSync.stream())
-										});
+										return _.checkFileSize(zipPath, bannerName + '.zip')
 									});
 								});
 							});
@@ -581,11 +576,11 @@ gulp.task('watch', function() {
 		},
 		logPrefix: config.client + '-banners',
 		reloadOnRestart: true,
-		notify: true
+		notify: false
 	});
 
 	gulp.watch( ['./index.html', './preview/index.html'] ).on('change', browserSync.reload);
-	gulp.watch( './banners/**/**/index.html', ['check-file-size']);
+	gulp.watch( './banners/**/**/index.html', ['check-file-size']).on('change', browserSync.reload);;
 	gulp.watch( './.gamma/preview/preview-assets/sass/**', ['sass'] );
 	gulp.watch( './preview/preview-assets/sass/**', ['sass'] );
 });
