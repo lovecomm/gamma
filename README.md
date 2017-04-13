@@ -1,5 +1,7 @@
 # Gamma
 
+(This is no longer maintained, as it has been replaced by [anione](https://github.com/lovecomm/anione).)
+
 Gamma is a CLI application to make generating HTML5 banners simple. It's built with Node & Gulp. Some of the things it does includes:
 * Inline all of your DOM elements and JS vars based upon the images and scripts you have within the **assets/** folder.
 * Allow you to put all your images into one **assets/images** directory, and script into one **assets/scripts** directory for development. When the time comes to package the banners, it will copy all images & scripts for each banner into it's respective banner directory.
